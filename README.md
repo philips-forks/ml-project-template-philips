@@ -1,4 +1,7 @@
 # Machine learning project template
+![11978-91-1536580089-2](https://user-images.githubusercontent.com/22550252/138448732-e867678f-c845-4428-a482-170412d08486.png)
+
+
 
 ## Requirements
 * Docker version 20.10.8
