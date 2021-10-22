@@ -30,7 +30,10 @@ in the folowing files:
 * In Linux shell: `./docker_run.sh /path/to/data/folder`
 * In Windows PowerShell: `.\docker_run.ps1 "D:\Path\To\Data Folder"`
 
-Inside the container data folder will be available at `/ws`
+  * Jupyter Lab is now available at `localhost:8888/lab`  
+  * Jupyter Notebook is available at `localhost:8888/tree`  
+  * You can [attach](https://code.visualstudio.com/docs/remote/containers) VSCode to a running container
+  * Inside the container `/path/to/data/folder` will be available at `/ws`
 
 ## Project structure and philosophy behind
 
