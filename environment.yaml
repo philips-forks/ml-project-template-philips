@@ -1,30 +1,30 @@
 name: base
 channels:
   - defaults
-  - pytorch
-  - conda-forge
+  # - pytorch
+  # - conda-forge
 dependencies:
   - python=3.8
-  - pytorch=1.9.0
-  - cudatoolkit=11.1
-  - torchvision
-  - matplotlib
-  - numpy
-  - pandas
-  - scipy
-  - seaborn
-  - scikit-image
-  - scikit-learn
+  # - pytorch=1.9.0
+  # - cudatoolkit=11.1
+  # - torchvision
+  # - matplotlib
+  # - numpy
+  # - pandas
+  # - scipy
+  # - seaborn
+  # - scikit-image
+  # - scikit-learn
   - pip
   - pip:
-    - albumentations
-    - black
+    # - albumentations
+    # - black
     - flake8
-    - opencv-python
-    - Pillow
-    - pretrainedmodels
-    - pydicom
-    - pytorch-lightning
-    - torchsummary
-    - tqdm
-    - statsmodels
+    # - opencv-python-headless
+    # - Pillow
+    # - pretrainedmodels
+    # - pydicom
+    # - pytorch-lightning
+    # - torchsummary
+    # - tqdm
+    # - statsmodels

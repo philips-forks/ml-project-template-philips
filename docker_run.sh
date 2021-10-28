@@ -1,7 +1,39 @@
 #!/bin/bash
-docker run --gpus all -d -v ${PWD}:/code -v $1:/ws -p 8888:8888 --user $(id -u):$(id -u) --name template_ml_project template-ml-project
+
+# Read default image name from build output
+docker_image_name=$(cat .docker_image_name)
+
+# Prompt for workspace folder
+read -r -p "Absolute path to project workspace folder ['']: " ws
+ws=${ws:-''}
+
+# Prompt for custom container name
+read -r -p "Container name [$docker_image_name]: " container_name
+container_name=${container_name:-$docker_image_name}
+
+# Prompt for GPUS visible in container
+read -p "GPUs [all]: " gpus_prompt
+gpus_prompt=${gpus_prompt:-all}
+gpus=\"'device=str'\"
+gpus=$(sed "s/str/$gpus_prompt/g" <<< $gpus)
+
+# Prompt for host Jupyter port
+read -p "Jupyter port [8888]: " jup_port
+jup_port=${jup_port:-8888}
+
+docker run --rm --gpus $gpus -d -v ${PWD}:/code -v $ws:/ws -p $jup_port:8888 --user $(id -u):$(id -u) --name $container_name $docker_image_name
+
+echo
+echo - Jupyter Lab is now available at: localhost:$jup_port/lab  
+echo - Jupyter Notebook is available at: localhost:$jup_port/tree
+echo - To go inside the container use: docker exec -it $container_name bash
+if [ "$ws" ]
+then
+      echo - Inside the container $ws will be available at /ws
+fi
 
 # OPTIONS DESCRIPTION
+# --rm: remove container after stop
 # --gpus all: allows access of docker container to your GPU
 # -d: runs container in detached mode
 # -v ${PWD}:/code: attaches current repository folder to /code in container. 
@@ -14,4 +46,4 @@ docker run --gpus all -d -v ${PWD}:/code -v $1:/ws -p 8888:8888 --user $(id -u):
 #                           By default container is run by root user, hence all files in 
 #                           /code and /ws are created under the root user. Usually this is
 #                           undesirable behaviour.
-# --name template_ml_project: give a name to the created container
+# --name container_name: give a name to the created container

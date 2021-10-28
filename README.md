@@ -8,33 +8,17 @@
 
 ## Installation
 
-0. Edit your requirements in `environment.yaml`
-
-2. Rename: 
-* `template-ml-project -> your-project-name`
-* `template_ml_project -> your_project_name`
-
-in the folowing files:
-```
-- docker_build.sh
-- docker_build.ps1
-- docker_run.sh
-- docker_run.ps1
-- setup.py
-```
+1. Edit project requirements in `environment.yaml`
 2. Build
 * In Linux shell: `bash docker_build.sh`
-* In Windows PowerShell: `docker_build.ps1`
+* In Windows PowerShell: `.\docker_build.ps1`
 
 3. Run
-* In Linux shell: `bash docker_run.sh /path/to/data/folder`
-* In Windows PowerShell: `.\docker_run.ps1 "D:\Path\To\Data Folder"`
+* In Linux shell: `bash docker_run.sh`
+* In Windows PowerShell: `.\docker_run.ps1`
 
-  * Jupyter Lab is now available at `localhost:8888/lab`  
-  * Jupyter Notebook is available at `localhost:8888/tree`
-  * To go inside the container use: `docker exec -it your_project_name bash` 
-  * You can [attach](https://code.visualstudio.com/docs/remote/containers) VSCode to a running container
-  * Inside the container `/path/to/data/folder` will be available at `/ws`
+
+- You can [attach](https://code.visualstudio.com/docs/remote/containers) VSCode to a running container
 
 ## Project structure and philosophy behind
 

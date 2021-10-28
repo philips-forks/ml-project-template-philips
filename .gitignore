@@ -1,4 +1,5 @@
 .jupyter_password
+.docker_image_name
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
