@@ -23,15 +23,16 @@ in the folowing files:
 - setup.py
 ```
 2. Build
-* In Linux shell: `./docker_build.sh`
+* In Linux shell: `bash docker_build.sh`
 * In Windows PowerShell: `docker_build.ps1`
 
 3. Run
-* In Linux shell: `./docker_run.sh /path/to/data/folder`
+* In Linux shell: `bash docker_run.sh /path/to/data/folder`
 * In Windows PowerShell: `.\docker_run.ps1 "D:\Path\To\Data Folder"`
 
   * Jupyter Lab is now available at `localhost:8888/lab`  
-  * Jupyter Notebook is available at `localhost:8888/tree`  
+  * Jupyter Notebook is available at `localhost:8888/tree`
+  * To go inside the container use: `docker exec -it your_project_name bash` 
   * You can [attach](https://code.visualstudio.com/docs/remote/containers) VSCode to a running container
   * Inside the container `/path/to/data/folder` will be available at `/ws`
 
