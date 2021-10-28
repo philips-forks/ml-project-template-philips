@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED 1
 
 # Install essential Linux packages
 RUN apt-get update \
-    && apt-get install -y git curl wget unzip vim \
+    && apt-get install -y build-essential git curl wget unzip vim \
     && rm -rf /var/lib/apt/lists/* \
     && conda init
 
