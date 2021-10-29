@@ -54,6 +54,6 @@ The idea behind this template is to be able to store lightweight code and heavy 
       ├── segmentation_masks
       |   └── mask.jpg
       └── checkpoints
-  ├── set_jupyter_password.py
-  └── setup.py
+  ├── configs/
+  └── etc/
  ```
