@@ -8,12 +8,12 @@
 
 ## Installation
 
-1. Edit project requirements in `environment.yaml`
-2. Build
+1. **Edit project requirements** in `environment.yaml`
+2. **Build**
 * In Linux shell: `bash docker_build.sh`
 * In Windows PowerShell: `.\docker_build.ps1`
 
-3. Run
+3. **Run**
 * In Linux shell: `bash docker_run.sh`
 * In Windows PowerShell: `.\docker_run.ps1`
 
