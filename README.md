@@ -9,15 +9,16 @@
 ## Installation
 
 1. **Edit project requirements** in `environment.yaml`
-2. **Build**
+2. **Build:**
 * In Linux shell: `bash docker_build.sh`
 * In Windows PowerShell: `.\docker_build.ps1`
 
-3. **Run**
+3. **Run:**
 * In Linux shell: `bash docker_run.sh`
 * In Windows PowerShell: `.\docker_run.ps1`
 
-
+  
+**Notes:**
 - You can [attach](https://code.visualstudio.com/docs/remote/containers) VSCode to a running container
 - For minor updates in the built image use (_not recommended as daily practice_):  
     `docker commit --change='CMD jupyter lab --no-browser' updated_container_name_or_hash docker_image_name`
