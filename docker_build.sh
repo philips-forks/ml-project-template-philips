@@ -11,4 +11,9 @@ echo ""
 echo $password > .jupyter_password
 echo $project_name > .docker_image_name
 
-docker build -t $project_name --build-arg username=$(whoami) --build-arg uid=$(id -u) .
+docker build -t $project_name \
+    --build-arg username=$(whoami) \
+    --build-arg groupname=$(id -g -n) \
+    --build-arg uid=$(id -u) \
+    --build-arg gid=$(id -g) \
+    .
