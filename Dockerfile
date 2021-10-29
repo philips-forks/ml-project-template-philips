@@ -26,7 +26,8 @@ RUN conda env update -n base -f /root/conda_environment.yaml --prune \
 
 # Configure Jupyter
 COPY .jupyter_password set_jupyter_password.py /home/$username/.jupyter/
-RUN conda install jupyterlab
+RUN conda install jupyterlab \
+    && conda clean --all --yes
 RUN python /home/$username/.jupyter/set_jupyter_password.py $username
 
 USER $username
