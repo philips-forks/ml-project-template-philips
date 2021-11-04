@@ -1,7 +1,7 @@
 Write-Output "Hi, let's set up your project."
 
 $curdir = Split-Path -Path $PSScriptRoot -Leaf
-$project_name = Read-Host "Set up docker image name [$($curdir)]"
+$project_name = Read-Host "Set up docker image name[:tag] [$($curdir)]"
 $project_name = ($curdir, $project_name)[[bool]$project_name]
 
 $pwd_string = Read-Host "Set up password for Jupyter"

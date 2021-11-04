@@ -2,7 +2,7 @@
 echo "Hi, let's set up your project."
 
 curdir=${PWD##*/}
-read -r -p "Set up Docker image name [$curdir]: " project_name
+read -r -p "Set up Docker image name[:tag] [$curdir]: " project_name
 project_name=${project_name:-$curdir}
 
 read -s -p "Set up password for Jupyter: " password
