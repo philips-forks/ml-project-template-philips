@@ -32,5 +32,6 @@ RUN su $username -c "python /home/$username/.jupyter/set_jupyter_password.py $us
 
 USER $username
 WORKDIR /code
+EXPOSE 8888
 
 CMD ["jupyter", "lab", "--no-browser"]
