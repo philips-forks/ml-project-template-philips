@@ -31,8 +31,14 @@ The idea behind this template is to be able to store lightweight code and heavy 
 ```
   # Code folder
   template-ml-project/
-  ├── template_ml_project
-      └── __init__.py
+  ├── libs/
+  |   ├── external_lib_as_submodule1/
+  |   └── external_lib_as_submodule1/
+  ├── src/
+  │   ├── template_ml_project/
+  │   │   └── __init__.py
+  |   └── template_lib2/
+  |       └── __init__.py
   ├── notebooks
   │   └── notebook_example.ipynb
   ├── .gitignore
