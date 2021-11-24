@@ -21,8 +21,9 @@
   
 **Notes:**
 - You can [attach](https://code.visualstudio.com/docs/remote/containers) VSCode to a running container
-- For minor updates in the built image use (_not recommended as daily practice_):  
-    `docker commit --change='CMD jupyter lab --no-browser' updated_container_name_or_hash docker_image_name`
+- If you want to commit minor updates from a running container to the built image use:  
+    `docker commit --change='CMD jupyter lab --no-browser' updated_container_name_or_hash docker_image_name`  
+    (_not recommended as daily practice_)
 
 ## Project structure and philosophy behind
 
