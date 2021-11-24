@@ -3,8 +3,9 @@
 
 
 
-## Requirements
-* Docker version 20.10.8
+## Requirements:
+* [Docker with GPU support on Windows 10/11](https://github.com/lobantseff/template-ml-project/blob/master/docs/WINDOWS_DOCKER_GPU.md)
+* [Docker with GPU support on Linux](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
 
 ## Installation
 
