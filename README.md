@@ -35,6 +35,7 @@ The idea behind this template is to be able to store lightweight code and heavy 
       └── __init__.py
   ├── notebooks
   │   └── notebook_example.ipynb
+  ├── .gitignore
   ├── Dockerfile
   ├── README.md
   ├── docker_build.ps1
