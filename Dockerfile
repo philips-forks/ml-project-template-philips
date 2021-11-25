@@ -15,7 +15,7 @@ RUN groupadd -g $uid $groupname \
 
 # Install essential Linux packages
 RUN apt-get update \
-    && apt-get install -y build-essential git curl wget unzip vim \
+    && apt-get install -y build-essential git curl wget unzip vim screen \
     && rm -rf /var/lib/apt/lists/* \
     && conda init
 
