@@ -18,14 +18,14 @@ gpus=\"'device=str'\"
 gpus=$(sed "s/str/$gpus_prompt/g" <<< $gpus)
 
 # Prompt for host Jupyter port
-read -p "Jupyter port [8888]: " jup_port
-jup_port=${jup_port:-8888}
+read -p "Jupyter port [8888]: " jupyter_port
+jupyter_port=${jupyter_port:-8888}
 
-docker run --rm --gpus $gpus -d -v ${PWD}:/code -v $ws:/ws -p $jup_port:8888 --user $(id -u):$(id -u) --name $container_name $docker_image_name
+docker run --rm --gpus $gpus -d -v ${PWD}:/code -v $ws:/ws -p $jupyter_port:8888 --user $(id -u):$(id -u) --name $container_name $docker_image_name
 
 echo
-echo - Jupyter Lab is now available at: localhost:$jup_port/lab  
-echo - Jupyter Notebook is available at: localhost:$jup_port/tree
+echo - Jupyter Lab is now available at: localhost:$jupyter_port/lab  
+echo - Jupyter Notebook is available at: localhost:$jupyter_port/tree
 echo - To go inside the container use: docker exec -it $container_name bash
 if [ "$ws" ]
 then

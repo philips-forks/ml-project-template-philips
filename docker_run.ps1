@@ -17,14 +17,14 @@ $gpus_prompt = ("all", $gpus_prompt)[[bool]$gpus_prompt]
 $gpus = '"device=str"'.replace('str',$gpus_prompt)
 
 # Prompt for host Jupyter port
-$jup_port = Read-Host "Jupyter port [8888]"
-$jup_port = (8888, $jup_port)[[bool]$jup_port]
+$jupyter_port = Read-Host "Jupyter port [8888]"
+$jupyter_port = (8888, $jupyter_port)[[bool]$jupyter_port]
 
-docker run --rm --gpus ${gpus} -d -v ${PWD}:/code -v ${ws}:/ws -p ${jup_port}:8888 --name $container_name $docker_image_name
+docker run --rm --gpus ${gpus} -d -v ${PWD}:/code -v ${ws}:/ws -p ${jupyter_port}:8888 --name $container_name $docker_image_name
 
 echo ""
-echo "- Jupyter Lab is now available at: localhost:$jup_port/lab" 
-echo "- Jupyter Notebook is available at: localhost:$jup_port/tree"
+echo "- Jupyter Lab is now available at: localhost:$jupyter_port/lab" 
+echo "- Jupyter Notebook is available at: localhost:$jupyter_port/tree"
 echo "- To go inside the container use: docker exec -it $container_name bash"
 if ($ws) 
 {
