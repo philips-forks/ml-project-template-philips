@@ -8,7 +8,7 @@ ARG username=user
 ARG groupname=user
 ARG uid=1000
 ARG gid=1000
-RUN groupadd -g $uid $groupname \
+RUN groupadd -g $gid $groupname \
     && useradd -u $uid -g $gid -s /bin/bash -d /home/$username $username \
     && mkdir /home/$username \
     && chown -R $username:$groupname /home/$username
