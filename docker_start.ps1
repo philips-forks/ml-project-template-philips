@@ -2,6 +2,7 @@ param([String]$ws="")
 
 # Read default image name from build output
 $docker_image_name = Get-Content ".docker_image_name"
+$ws_dump = Get-Content ".ws_path"
 
 # Prompt for workspace folder
 $ws = Read-Host "Absolute path to project workspace folder [$ws_dump]"

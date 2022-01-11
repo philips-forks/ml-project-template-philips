@@ -22,4 +22,4 @@ docker build -t $docker_image_name \
 # Install the packages in ./src
 docker run -v ${PWD}:/code --name tmp_container $docker_image_name pip install -e .
 docker commit --change='CMD jupyter lab --no-browser' tmp_container $docker_image_name
-docker rm tmp_container
+docker rm tmp_container &> /dev/null

@@ -2,10 +2,12 @@
 
 # Read default image name from build output
 docker_image_name=$(cat .docker_image_name)
+ws_dump=$(cat .ws_path)
 
 # Prompt for workspace folder
 read -r -p "Absolute path to project workspace folder [$ws_dump]: " ws
 ws=${ws:-$ws_dump}
+
 if [ "$ws" ]
 then
     echo $ws > .ws_path
@@ -25,7 +27,16 @@ gpus=$(sed "s/str/$gpus_prompt/g" <<< $gpus)
 read -p "Jupyter port [8888]: " jupyter_port
 jupyter_port=${jupyter_port:-8888}
 
-docker run --rm --gpus $gpus -d -v ${PWD}:/code -v $ws:/ws -p $jupyter_port:8888 --user $(id -u):$(id -u) --name $container_name $docker_image_name
+docker run \
+    --rm \
+    --gpus $gpus \
+    -d \
+    -v ${PWD}:/code \
+    -v $ws:/ws \
+    -p $jup_port:8888 \
+    --user $(id -u):$(id -u) \
+    --name $container_name \
+    $docker_image_name
 
 echo
 echo - Jupyter Lab is now available at: localhost:$jupyter_port/lab  
