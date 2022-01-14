@@ -23,6 +23,7 @@ https://user-images.githubusercontent.com/22550252/143865452-c44cfb7d-12ee-4589-
   
 **Notes:**
 - You can [attach](https://code.visualstudio.com/docs/remote/containers) VSCode to a running container
+- To attach VSCode to the container run on remote server, follow [this link](https://github.com/lobantseff/template-ml-project/blob/master/docs/VSCODE.md)
 - If you want to commit minor updates from a running container to the built image use:  
     `docker commit --change='CMD jupyter lab --no-browser' updated_container_name_or_hash docker_image_name`  
     (_not recommended as daily practice_)
