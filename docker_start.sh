@@ -2,20 +2,23 @@
 
 # Read default image name from build output
 docker_image_name=$(cat .docker_image_name)
+container_name=$(echo $docker_image_name | tr : _)
 ws_dump=$(cat .ws_path)
+
+read -r -p "Image [$docker_image_name]: " docker_image_name_input
+docker_image_name=${docker_image_name_input:-$docker_image_name}
 
 # Prompt for workspace folder
 read -r -p "Absolute path to project workspace folder [$ws_dump]: " ws
 ws=${ws:-$ws_dump}
-
 if [ "$ws" ]
 then
     echo $ws > .ws_path
 fi
 
 # Prompt for custom container name
-read -r -p "Container name [$docker_image_name]: " container_name
-container_name=${container_name:-$docker_image_name}
+read -r -p "Container name [$container_name]: " container_name_input
+container_name=${container_name_input:-$container_name}
 
 # Prompt for GPUS visible in container
 read -p "GPUs [all]: " gpus_prompt
@@ -41,8 +44,12 @@ docker run \
 echo
 echo - Jupyter Lab is now available at: localhost:$jupyter_port/lab  
 echo - Jupyter Notebook is available at: localhost:$jupyter_port/tree
-echo - To go inside the container use: docker exec -it $container_name bash
-echo - To go inside the container and install packages use: docker exec -it --user=root $container_name bash
+echo
+echo - Inspect the container: docker exec -it $container_name bash
+echo - Inspect the container and install packages: docker exec -it --user=root $container_name bash
+echo
+echo - Stop the container: docker stop $container_name
+echo
 if [ "$ws" ]
 then
       echo - Inside the container $ws will be available at /ws

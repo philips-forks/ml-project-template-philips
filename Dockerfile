@@ -19,9 +19,12 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && conda init
 
-# Install dependencies
+# Install dependencies. Prioritize conda-forge channel (not restricted for for corporate users)
 COPY environment.yaml /root/conda_environment.yaml
-RUN conda env update -n base -f /root/conda_environment.yaml --prune \
+RUN conda update -n base -c defaults conda \
+    && conda config --add channels conda-forge \
+    && conda config --set channel_priority flexible \
+    && conda env update -n base -f /root/conda_environment.yaml --prune \
     && conda clean --all --yes
 
 # Configure Jupyter individually (to not to include in the requirements)

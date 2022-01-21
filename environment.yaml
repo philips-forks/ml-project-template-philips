@@ -1,8 +1,7 @@
 name: base
 channels:
-  - defaults
+  - conda-forge
   # - pytorch
-  # - conda-forge
 dependencies:
   - python=3.8
   # - pytorch=1.9.0

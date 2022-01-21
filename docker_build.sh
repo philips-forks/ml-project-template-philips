@@ -19,7 +19,10 @@ docker build -t $docker_image_name \
     --build-arg gid=$(id -g) \
     .
 
-# Install the packages in ./src
+# Install the packages from ./src to the container
 docker run -v ${PWD}:/code --name tmp_container $docker_image_name pip install -e .
 docker commit --change='CMD jupyter lab --no-browser' tmp_container $docker_image_name
 docker rm tmp_container &> /dev/null
+
+echo Build successfully finished.
+echo Start the container: bash docker_start.sh
