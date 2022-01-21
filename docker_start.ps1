@@ -41,5 +41,5 @@ if ($ws)
 {
     echo "- Inside the container $ws will be available at /ws" 
 }
-
+Write-Output ""
 Read-Host -Prompt "Press Enter to exit"

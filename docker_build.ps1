@@ -14,10 +14,10 @@ docker build -t $docker_image_name .
 
 # Install the packages in ./src
 docker run -v ${PWD}:/code --name tmp_container $docker_image_name pip install -e .
-docker commit --change='CMD jupyter lab --no-browser' tmp_container $docker_image_name
+docker commit --change='CMD jupyter lab --no-browser' tmp_container $docker_image_name > $null
 docker rm tmp_container > $null
 
 Write-Output "Build successfully finished"
 Write-Output "Start the container: .\docker_start.ps1 in Powershell, or right-click on script file -> Run with Powershell"
-
+Write-Output ""
 Read-Host -Prompt "Press Enter to exit"

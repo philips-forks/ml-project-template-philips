@@ -21,9 +21,8 @@ RUN apt-get update \
 
 # Install dependencies. Prioritize conda-forge channel (not restricted for for corporate users)
 COPY environment.yaml /root/conda_environment.yaml
-RUN conda update -n base -c defaults conda \
-    && conda config --add channels conda-forge \
-    && conda config --set channel_priority flexible \
+RUN conda config --add channels conda-forge \
+    && conda update -n base conda \
     && conda env update -n base -f /root/conda_environment.yaml --prune \
     && conda clean --all --yes
 
