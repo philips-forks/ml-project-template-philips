@@ -14,26 +14,27 @@ https://user-images.githubusercontent.com/22550252/143865452-c44cfb7d-12ee-4589-
 1. **Edit project requirements** in `environment.yaml`
 2. **Build:**
 * In Linux shell: `bash docker_build.sh`
-* In Windows PowerShell: `.\docker_build.ps1`
+* In Windows PowerShell: `.\docker_build.ps1` or right-click on the file and choose "Run with Powershell"
 
 3. **Start container:**
 * In Linux shell: `bash docker_start.sh`
-* In Windows PowerShell: `.\docker_start.ps1`
+* In Windows PowerShell: `.\docker_start.ps1` or right-click on the file and choose "Run with Powershell"
 
   
 **Notes:**
+- On Windows machine. If PowerShell says "execution of scripts is disabled on this system", you can  run in powershell with admin rights: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine` to allow scripts execution. But do it with caution, since some scripts can be vulnerable. For the details follow the [link](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
 - You can [attach](https://code.visualstudio.com/docs/remote/containers) VSCode to a running container
 - To attach VSCode to the container run on remote server, follow [this link](https://github.com/lobantseff/template-ml-project/blob/master/docs/VSCODE.md)
 - If you want to commit minor updates from a running container to the built image use:  
     `docker commit --change='CMD jupyter lab --no-browser' updated_container_name_or_hash docker_image_name`  
-    (_not recommended as daily practice_)
+    (_not recommended as daily practice, it is better to update the environment or Dockerfile instead_)
 
 ## Project structure and philosophy behind
 
 The idea behind this template is to be able to store lightweight code and heavy model artifacts and data in different places.
 
 ```
-  # Code folder
+  # Code folder. Available under `/code` inside the container
   template-ml-project/
   ├── libs/
   |   ├── external_lib_as_submodule1/
@@ -56,7 +57,7 @@ The idea behind this template is to be able to store lightweight code and heavy 
   ├── set_jupyter_password.py
   └── setup.py
   
-  # Workspace folder
+  # Workspace folder. Available under `/ws` inside the container.
   template-ml-project-workspace/
   ├── data_raw
       └── file.dcm
