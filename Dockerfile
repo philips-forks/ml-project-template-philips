@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3
+FROM condaforge/miniforge3
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -8,7 +8,7 @@ ARG username=user
 ARG groupname=user
 ARG uid=1000
 ARG gid=1000
-RUN groupadd -g $gid $groupname \
+RUN groupadd -f -g $gid $groupname \
     && useradd -u $uid -g $gid -s /bin/bash -d /home/$username $username \
     && mkdir /home/$username \
     && chown -R $username:$groupname /home/$username
@@ -21,8 +21,7 @@ RUN apt-get update \
 
 # Install dependencies. Prioritize conda-forge channel (not restricted for for corporate users)
 COPY environment.yaml /root/conda_environment.yaml
-RUN conda config --add channels conda-forge \
-    && conda update -n base conda \
+RUN conda update -n base conda \
     && conda env update -n base -f /root/conda_environment.yaml --prune \
     && conda clean --all --yes
 
