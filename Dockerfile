@@ -29,9 +29,12 @@ RUN conda update -n base conda \
 COPY --chown=$username:$groupname .jupyter_password set_jupyter_password.py /home/$username/.jupyter/
 RUN conda install jupyterlab \
     && conda clean --all --yes
-RUN su $username -c "python /home/$username/.jupyter/set_jupyter_password.py $username"
 
+# Activate conda for user and set up jupyter password
 USER $username
+RUN /opt/conda/bin/conda init \
+    && python /home/$username/.jupyter/set_jupyter_password.py $username
+
 WORKDIR /code
 EXPOSE 8888
 
