@@ -37,7 +37,7 @@ docker run \
     -v ${PWD}:/code \
     -v $ws:/ws \
     -p $jupyter_port:8888 \
-    --user $(id -u):$(id -u) \
+    --user $(id -u):$(id -g) \
     --name $container_name \
     $docker_image_name
 
