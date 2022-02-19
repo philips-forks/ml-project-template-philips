@@ -11,30 +11,28 @@ ARG gid=1000
 RUN groupadd -f -g $gid $groupname \
     && useradd -u $uid -g $gid -s /bin/bash -d /home/$username $username \
     && mkdir /home/$username \
-    && chown -R $username:$groupname /home/$username
+    && chown -R $username:$groupname /home/$username \
+    && echo PATH=$PATH > /etc/environment \
+    && chmod a+w /opt/conda
 
 # Install essential Linux packages
 RUN apt-get update \
     && apt-get install -y build-essential git curl wget unzip vim screen \
-    && rm -rf /var/lib/apt/lists/* \
-    && conda init
+    && rm -rf /var/lib/apt/lists/*
+
 
 # Install dependencies. Prioritize conda-forge channel (not restricted for for corporate users)
-COPY environment.yaml /root/conda_environment.yaml
+COPY environment.yaml /$username/conda_environment.yaml
 RUN conda update -n base conda \
-    && conda env update -n base -f /root/conda_environment.yaml --prune \
-    && conda clean --all --yes
+    && conda env update -n base -f /$username/conda_environment.yaml --prune
 
 # Configure Jupyter individually (to not to include in the requirements)
 COPY --chown=$username:$groupname .jupyter_password set_jupyter_password.py /home/$username/.jupyter/
 RUN conda install jupyterlab \
-    && conda clean --all --yes
+    && conda clean --all --yes \
+    && su $username -c "python /home/$username/.jupyter/set_jupyter_password.py $username"
 
-# Activate conda for user and set up jupyter password
 USER $username
-RUN /opt/conda/bin/conda init \
-    && python /home/$username/.jupyter/set_jupyter_password.py $username
-
 WORKDIR /code
 EXPOSE 8888
 
