@@ -1,5 +1,5 @@
 # Machine learning project template
-https://user-images.githubusercontent.com/22550252/143865452-c44cfb7d-12ee-4589-a5ed-5bac6a789965.mp4
+<!-- https://user-images.githubusercontent.com/22550252/143865452-c44cfb7d-12ee-4589-a5ed-5bac6a789965.mp4 -->
 
 
 ## Requirements:
