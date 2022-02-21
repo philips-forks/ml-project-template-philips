@@ -19,7 +19,10 @@ Host server-alias
  ```
 When created, you will be able to connect to the sever with `ssh server-alias` command.
 
-6. Go to local VSCode client instance and look into Docker extenstion
+6. SSH to the server, go to local VSCode client instance and look into Docker extenstion
+![image](https://user-images.githubusercontent.com/22550252/154921162-e0d026be-dea8-4739-ae23-6b723c1cfbfa.png)
+
+7. If port 23750 is used, you should change it in VSCode settings and port forwarding setting to any other arbitrary unused port.
 
 ## Default VSCode remote instance extensions
 If you have VSCode extesions to install in every container follow:
