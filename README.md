@@ -21,9 +21,9 @@ https://user-images.githubusercontent.com/22550252/143865452-c44cfb7d-12ee-4589-
 **Notes:**
 - On Windows machine. If PowerShell says "execution of scripts is disabled on this system", you can  run in powershell with admin rights: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine` to allow scripts execution. But do it with caution, since some scripts can be vulnerable. For the details follow the [link](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
 - You can attach VSCode to a running container: [quick tutorial](https://github.com/lobantseff/template-ml-project/blob/master/docs/VSCODE.md), [documentation](https://code.visualstudio.com/docs/remote/containers)
-- If you want to commit minor updates from a running container to the built image use:  
+- To commit updates from a running container to the built image use:  
     `docker commit --change='CMD jupyter lab --no-browser' updated_container_name_or_hash docker_image_name`  
-    (_not recommended as daily practice, it is better to update the environment or Dockerfile instead_)
+    (_not recommended as a daily practice, good practice is to update the environment or Dockerfile_)
 
 ## Project structure and philosophy behind
 
