@@ -1,6 +1,5 @@
 FROM condaforge/miniforge3
 
-ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Add user to avoid root access to attached dirs
