@@ -30,16 +30,45 @@ gpus=$(sed "s/str/$gpus_prompt/g" <<< $gpus)
 read -p "Jupyter port [8888]: " jupyter_port
 jupyter_port=${jupyter_port:-8888}
 
-docker run \
-    --rm \
-    --gpus $gpus \
-    -d \
-    -v ${PWD}:/code \
-    -v $ws:/ws \
-    -p $jupyter_port:8888 \
-    --user $(id -u):$(id -g) \
-    --name $container_name \
-    $docker_image_name
+while [ true ]
+do
+
+    read -p "Restart container on reboot? [Y/n]: " rc
+    rc=${rc:-"Y"}
+
+    if [ $rc == "Y" ]
+    then
+        docker run \
+            --restart unless-stopped \
+            --gpus $gpus \
+            -d \
+            -v ${PWD}:/code \
+            -v $ws:/ws \
+            -p $jupyter_port:8888 \
+            --user $(id -u):$(id -g) \
+            --name $container_name \
+            $docker_image_name
+        break
+
+    elif [ $rc == "n" ]
+    then
+        docker run \
+            --rm \
+            --gpus $gpus \
+            -d \
+            -v ${PWD}:/code \
+            -v $ws:/ws \
+            -p $jupyter_port:8888 \
+            --user $(id -u):$(id -g) \
+            --name $container_name \
+            $docker_image_name
+        break
+    else
+        echo "Provide Y or n"
+    fi
+
+done
+
 
 echo
 echo - Jupyter Lab is now available at: localhost:$jupyter_port/lab  
@@ -52,7 +81,7 @@ echo - Stop the container: docker stop $container_name
 echo
 if [ "$ws" ]
 then
-      echo - Inside the container $ws will be available at /ws
+    echo - Inside the container $ws will be available at /ws
 fi
 
 # OPTIONS DESCRIPTION
