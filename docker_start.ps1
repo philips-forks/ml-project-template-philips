@@ -31,13 +31,13 @@ while ($true)
     $rc = Read-Host "Restart container on reboot? [Y/n]"
     if ($rc -eq "Y" -or $rc -eq "")
     {
-        docker run --gpus ${gpus} -d --restart unless-stopped -v ${PWD}:/code -v ${ws}:/ws -p ${jupyter_port}:8888 --name $container_name $docker_image_name
+        docker run --gpus ${gpus} -d --restart unless-stopped -v ${PWD}:/code -v ${ws}:/ws -p 127.0.0.1:${jupyter_port}:8888 --name $container_name $docker_image_name
         break
     }
 
     elseif ( $rc -eq "n" )
     {
-        docker run --gpus ${gpus} -d --rm -v ${PWD}:/code -v ${ws}:/ws -p ${jupyter_port}:8888 --name $container_name $docker_image_name
+        docker run --gpus ${gpus} -d --rm -v ${PWD}:/code -v ${ws}:/ws -p 127.0.0.1:${jupyter_port}:8888 --name $container_name $docker_image_name
         break
     }
 

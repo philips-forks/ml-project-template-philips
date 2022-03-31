@@ -44,7 +44,7 @@ do
             -d \
             -v ${PWD}:/code \
             -v $ws:/ws \
-            -p $jupyter_port:8888 \
+            -p 127.0.0.1:$jupyter_port:8888 \
             --user $(id -u):$(id -g) \
             --name $container_name \
             $docker_image_name
@@ -58,7 +58,7 @@ do
             -d \
             -v ${PWD}:/code \
             -v $ws:/ws \
-            -p $jupyter_port:8888 \
+            -p 127.0.0.1:$jupyter_port:8888 \
             --user $(id -u):$(id -g) \
             --name $container_name \
             $docker_image_name
