@@ -35,7 +35,6 @@ do
 
     read -p "Restart container on reboot? [Y/n]: " rc
     rc=${rc:-"Y"}
-
     if [ $rc == "Y" ]
     then
         docker run \
@@ -66,7 +65,6 @@ do
     else
         echo "Provide Y or n"
     fi
-
 done
 
 
