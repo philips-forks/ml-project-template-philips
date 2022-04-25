@@ -1,12 +1,11 @@
 name: base
 channels:
   - conda-forge
-  # - pytorch
 dependencies:
   - python=3.8
-  # - pytorch=1.9.0
+  # - pytorch::pytorch=1.9.0
+  # - pytorch::torchvision
   # - cudatoolkit=11.1
-  # - torchvision
   # - matplotlib
   # - numpy
   # - pandas
