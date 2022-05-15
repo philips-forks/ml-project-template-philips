@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 echo "Hi, let's set up your project."
 
 curdir=${PWD##*/}
@@ -25,4 +27,4 @@ docker commit --change='CMD jupyter lab --no-browser' tmp_container $docker_imag
 docker rm tmp_container &> /dev/null
 
 echo Build successfully finished.
-echo Start the container: bash docker_start.sh
+echo To start the container run: bash docker_start.sh

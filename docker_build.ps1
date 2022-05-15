@@ -1,3 +1,5 @@
+$ErrorActionPreference = "Stop"
+
 Write-Output "Hi, let's set up your project."
 
 $curdir = Split-Path -Path $PSScriptRoot -Leaf

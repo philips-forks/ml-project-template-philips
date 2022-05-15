@@ -1,3 +1,5 @@
+$ErrorActionPreference = "Stop"
+
 # Read default image name from build output or manual input
 $docker_image_name = Get-Content ".docker_image_name"
 $docker_image_name_input = Read-Host "Image [$docker_image_name]"

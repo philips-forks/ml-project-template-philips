@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Read default image name from build output
 docker_image_name=$(cat .docker_image_name)
