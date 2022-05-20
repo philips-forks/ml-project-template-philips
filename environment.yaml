@@ -2,13 +2,16 @@ name: base
 channels:
   - conda-forge
 dependencies:
-  - python=3.8
-  # - pytorch::pytorch=1.9.0
+  - python=3.9
+  # - pytorch::pytorch
   # - pytorch::torchvision
-  # - cudatoolkit=11.1
+  # - cudatoolkit=11.3
   # - matplotlib
   # - numpy
   # - pandas
+  # - opencv
+  # - py-opencv
+  # - ipywidgets
   # - scipy
   # - seaborn
   # - scikit-image
@@ -17,12 +20,11 @@ dependencies:
   - pip:
     # - albumentations
     # - black
-    - flake8
-    # - opencv-python-headless
+    # - flake8
     # - Pillow
     # - pretrainedmodels
     # - pydicom
     # - pytorch-lightning
-    # - torchsummary
+    # - torchinfo
     # - tqdm
     # - statsmodels
