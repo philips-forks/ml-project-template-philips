@@ -46,6 +46,7 @@ do
             -v $ws:/ws \
             -p 127.0.0.1:$jupyter_port:8888 \
             --user $(id -u):$(id -g) \
+            --shm-size 32G \
             --name $container_name \
             $docker_image_name
         break
@@ -60,6 +61,7 @@ do
             -v $ws:/ws \
             -p 127.0.0.1:$jupyter_port:8888 \
             --user $(id -u):$(id -g) \
+            --shm-size 32G \
             --name $container_name \
             $docker_image_name
         break

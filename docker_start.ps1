@@ -40,6 +40,7 @@ while ($true)
         -v ${PWD}:/code `
         -v ${ws}:/ws `
         -p 127.0.0.1:${jupyter_port}:8888 `
+        --shm-size 32G `
         --name $container_name `
         $docker_image_name
         break
@@ -54,6 +55,7 @@ while ($true)
         -v ${PWD}:/code `
         -v ${ws}:/ws `
         -p 127.0.0.1:${jupyter_port}:8888 `
+        --shm-size 32G `
         --name $container_name `
         $docker_image_name
         break
