@@ -8,8 +8,13 @@ ws_dump=$(cat .ws_path)
 tb_dump=$(cat .tb_dir)
 
 
+# Prompt for image to use
 read -r -p "Image [$docker_image_name]: " docker_image_name_input
 docker_image_name=${docker_image_name_input:-$docker_image_name}
+
+# Prompt for custom container name
+read -r -p "Container name [$container_name]: " container_name_input
+container_name=${container_name_input:-$container_name}
 
 # Prompt for workspace folder
 read -r -p "Absolute path to the project workspace folder with data and experiment artifacts [$ws_dump]: " ws
@@ -28,9 +33,6 @@ then
     echo $tb > .tb_dir
 fi
 
-# Prompt for custom container name
-read -r -p "Container name [$container_name]: " container_name_input
-container_name=${container_name_input:-$container_name}
 
 # Prompt for GPUS visible in container
 read -p "GPUs [all]: " gpus_prompt
@@ -70,7 +72,7 @@ do
             -p 127.0.0.1:$jupyter_port:8888 \
             -p 127.0.0.1:$tb_port:6006 \
             -p 127.0.0.1:$ssh_port:22 \
-            -e tb_dir=$tb \
+            -e TB_DIR=$tb \
             --name $container_name \
             $docker_image_name
         docker exec --user=root $container_name service ssh start
@@ -91,7 +93,7 @@ do
             -p 127.0.0.1:$jupyter_port:8888 \
             -p 127.0.0.1:$tb_port:6006 \
             -p 127.0.0.1:$ssh_port:22 \
-            -e tb_dir=$tb \
+            -e TB_DIR=$tb \
             --name $container_name \
             $docker_image_name
         docker exec --user=root $container_name service ssh start
@@ -105,11 +107,10 @@ done
 echo ------------------------ CONTAINER IS SUCCESSFULLY STARTED ------------------------
 echo - Jupyter Lab is available at: localhost:$jupyter_port/lab  
 echo - Jupyter Notebook is available at: localhost:$jupyter_port/tree
-echo - Connect to container via SSH: `ssh -p $ssh_port $(whoami)@localhost`.
 echo
+echo - Connect to container via SSH: ssh -p $ssh_port $(whoami)@localhost
 echo - Inspect the container: docker exec -it $container_name bash
-echo - Inspect the container and install packages: docker exec -it --user=root $container_name bash
-echo - Update the image: docker commit --change='CMD /init.sh' updated_container_name_or_hash docker_image_name
+echo - Update the image: docker commit --change='CMD ~/init.sh' updated_container_name_or_hash docker_image_name
 echo
 echo - Stop the container: docker stop $container_name
 echo

@@ -40,7 +40,7 @@ do
 done
 docker exec -u root tmp_container pip install -e /code/.
 docker stop tmp_container
-docker commit --change='CMD /init.sh' tmp_container $docker_image_name
+docker commit --change='CMD ~/init.sh' tmp_container $docker_image_name
 docker rm tmp_container &> /dev/null
 
 echo "------------------ Build successfully finished! --------------------------------"

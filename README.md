@@ -1,29 +1,28 @@
 # Machine learning project template
-<!-- https://user-images.githubusercontent.com/22550252/143865452-c44cfb7d-12ee-4589-a5ed-5bac6a789965.mp4 -->
 
 
 ## Requirements:
 * [Docker with GPU support on Windows 10/11](https://github.com/lobantseff/template-ml-project/blob/master/docs/WINDOWS_DOCKER_GPU.md)
 * [Docker with GPU support on Linux](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
 
-## Installation
+## Quick start
 
 1. **Edit project requirements** in `environment.yaml`
 2. **Build:**
 * In Linux shell: `bash docker_build.sh`
-* In Windows PowerShell: `.\docker_build.ps1` or right-click on the file and choose "Run with Powershell"
+* In Windows PowerShell: `.\docker_build.ps1` or right-click -> "Run with Powershell"
 
 3. **Start container:**
 * In Linux shell: `bash docker_start.sh`
-* In Windows PowerShell: `.\docker_start.ps1` or right-click on the file and choose "Run with Powershell"
+* In Windows PowerShell: `.\docker_start.ps1` or right-click -> "Run with Powershell"
 
   
 **Notes:**
 - On Windows machine. If PowerShell says "execution of scripts is disabled on this system", you can  run in powershell with admin rights: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine` to allow scripts execution. But do it with caution, since some scripts can be vulnerable. For the details follow the [link](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
 - You can attach VSCode to a running container: [quick tutorial](https://github.com/lobantseff/template-ml-project/blob/master/docs/VSCODE.md), [documentation](https://code.visualstudio.com/docs/remote/containers)
 - To commit updates from a running container to the built image use:  
-    `docker commit --change='CMD jupyter lab --no-browser' updated_container_name_or_hash docker_image_name`  
-    (_not recommended as a daily practice, good practice is to update the environment or Dockerfile_)
+    `docker commit --change='CMD ~/init.sh' updated_container_name_or_hash docker_image_name`  
+    (_not recommended as a daily practice, good practice is to update the environment.yaml, requirements.txt or Dockerfile_)
 
 ## Project structure and philosophy behind
 
