@@ -65,7 +65,6 @@ do
             -d \
             -v $HOME/.ssh:$HOME/.ssh \
             -v ${PWD}:/code \
-            -v /mnt/nfs_storage/:/mnt/nfs_storage/ \
             -v $ws:/ws \
             --user $(id -u):$(id -g) \
             --shm-size 32G \
@@ -86,7 +85,6 @@ do
             -d \
             -v $HOME/.ssh:$HOME/.ssh \
             -v ${PWD}:/code \
-            -v /mnt/nfs_storage/:/mnt/nfs_storage/ \
             -v $ws:/ws \
             --user $(id -u):$(id -g) \
             --shm-size 32G \
