@@ -37,7 +37,7 @@ docker exec -u root tmp_container pip install -e /code/.
 for lib in $(ls ./libs)
 do
     echo "Installing $lib"
-    docker exec tmp_container pip install -e /code/libs/$lib/.
+    docker exec -u root tmp_container pip install -e /code/libs/$lib/.
 done
 docker stop tmp_container
 docker commit --change='CMD /init.sh' tmp_container $docker_image_name
