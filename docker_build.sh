@@ -36,9 +36,9 @@ docker run -dt -v ${PWD}:/code --name tmp_container $docker_image_name
 for lib in $(ls ./libs)
 do
     echo "Installing $lib"
-    docker exec -u root tmp_container pip install -e /code/libs/$lib/.
+    docker exec tmp_container pip install -e /code/libs/$lib/.
 done
-docker exec -u root tmp_container pip install -e /code/.
+docker exec tmp_container pip install -e /code/.
 docker stop tmp_container
 docker commit --change='CMD ~/init.sh' tmp_container $docker_image_name
 docker rm tmp_container &> /dev/null
