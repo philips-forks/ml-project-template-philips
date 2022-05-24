@@ -61,7 +61,7 @@ do
             --restart unless-stopped \
             --gpus $gpus \
             -d \
-            -v $HOME./ssh:$HOME/.ssh \
+            -v $HOME/.ssh:$HOME/.ssh \
             -v ${PWD}:/code \
             -v /mnt/nfs_storage/:/mnt/nfs_storage/ \
             -v $ws:/ws \
@@ -82,7 +82,7 @@ do
             --rm \
             --gpus $gpus \
             -d \
-            -v $HOME./ssh:$HOME/.ssh \
+            -v $HOME/.ssh:$HOME/.ssh \
             -v ${PWD}:/code \
             -v /mnt/nfs_storage/:/mnt/nfs_storage/ \
             -v $ws:/ws \
@@ -102,9 +102,10 @@ do
 done
 
 
-echo
-echo - Jupyter Lab is now available at: localhost:$jupyter_port/lab  
+echo ------------------------ CONTAINER IS SUCCESSFULLY STARTED ------------------------
+echo - Jupyter Lab is available at: localhost:$jupyter_port/lab  
 echo - Jupyter Notebook is available at: localhost:$jupyter_port/tree
+echo - Connect to container via SSH: `ssh -p $ssh_port $(whoami)@localhost`.
 echo
 echo - Inspect the container: docker exec -it $container_name bash
 echo - Inspect the container and install packages: docker exec -it --user=root $container_name bash
@@ -117,6 +118,7 @@ then
     echo - Inside the container $ws will be available at /ws
     echo - Tensorboard is available at: localhost:$tb_port, monitoring experiments in $tb.
 fi
+echo -----------------------------------------------------------------------------------
 
 # OPTIONS DESCRIPTION
 # --rm: remove container after stop
