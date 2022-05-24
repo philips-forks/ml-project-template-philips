@@ -39,7 +39,6 @@ RUN apt-get update \
     tmux \
     python3-opencv \
     openssh-server \
-    # Setting up SSH
     && mkdir /var/run/sshd \
     && rm -rf /var/lib/apt/lists/* \
     && git lfs install
@@ -55,7 +54,7 @@ RUN conda update -n base conda \
 
 # ------------------- Configure Jupyter and Tensorboard individually --------------------
 COPY --chown=$username:$groupname .jupyter_password Docker/set_jupyter_password.py /home/$username/.jupyter/
-RUN conda install jupyterlab tensorboard \
+RUN conda install -y jupyterlab tensorboard \
     && su $username -c "python /home/$username/.jupyter/set_jupyter_password.py $username"
 
 RUN echo "#!/bin/sh" > /init.sh \

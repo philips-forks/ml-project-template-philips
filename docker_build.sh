@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-echo "Hi, let's set up your project."
+echo "------------------------ Hi, let's set up your project! ------------------------"
 
+# ---------------------------- Prompts to define variables  -----------------------------
 curdir=${PWD##*/}
 read -r -p "Set up Docker image name[:tag] [$curdir]: " docker_image_name
 docker_image_name=${docker_image_name:-$curdir}
@@ -42,5 +43,5 @@ docker stop tmp_container
 docker commit --change='CMD /init.sh' tmp_container $docker_image_name
 docker rm tmp_container &> /dev/null
 
-echo Build successfully finished.
-echo Start the container: bash docker_start.sh
+echo "------------------ Build successfully finished! --------------------------------"
+echo "------------------ Start the container: bash docker_start.sh -------------------"
