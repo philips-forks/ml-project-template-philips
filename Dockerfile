@@ -10,9 +10,7 @@ ARG gid=1000
 ARG userpwd=passwd
 RUN groupadd -f -g $gid $groupname \
     && useradd -u $uid -g $gid -s /bin/bash -d /home/$username $username \
-    && mkdir /home/$username \
-    && mkdir /home/$username/.ssh \
-    # ************************** Set up proxy **************************
+    && mkdir -p /home/$username/.ssh \
     && echo export PATH=$PATH:/home/$username/.local/bin > /home/$username/.bashrc \
     && echo export http_proxy=$http_proxy >> /home/$username/.bashrc \
     && echo export https_proxy=$https_proxy >> /home/$username/.bashrc \
@@ -20,11 +18,10 @@ RUN groupadd -f -g $gid $groupname \
     && echo export HTTPS_PROXY=$HTTPS_PROXY >> /home/$username/.bashrc \
     && echo "Acquire::http::Proxy \"$HTTP_PROXY\";" >> /etc/apt/apt.conf.d/10proxy \
     && echo "Acquire::https::Proxy \"$HTTPS_PROXY\";" >> /etc/apt/apt.conf.d/10proxy \
-    # ******************************************************************
     && chmod a+x /home/$username/.bashrc \
     && chown -R $username:$groupname /home/$username \
     && sh -c "echo $username:$userpwd | chpasswd" \
-    && echo PATH=$PATH > /etc/environment \
+    && echo export PATH=$PATH > /etc/environment \
     && chmod a+w /opt/conda
 
 
@@ -33,15 +30,19 @@ RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
     git \
+    git-lfs \
     curl \
     wget \
     unzip \
     vim \
     screen \
     tmux \
+    python3-opencv \
     openssh-server \
+    # Setting up SSH
     && mkdir /var/run/sshd \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && git lfs install
 
 
 # ----------------------------- Install conda dependencies ------------------------------
