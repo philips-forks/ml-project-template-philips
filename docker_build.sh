@@ -34,10 +34,14 @@ docker build -t $docker_image_name \
 # ----- Install user packages from ./src to the container and submodules from ./libs ----
 docker run -dt -v ${PWD}:/code --name tmp_container $docker_image_name
 for lib in $(ls ./libs)
-do
-    echo "Installing $lib"
-    docker exec tmp_container pip install -e /code/libs/$lib/.
-done
+    do
+        if test -f /code/libs/$lib/setup.py; then
+            echo "Installing $lib"
+            docker exec tmp_container pip install -e /code/libs/$lib/.
+        else 
+            echo "$lib does not have setup.py file to install."
+        fi
+    done
 docker exec tmp_container pip install -e /code/.
 docker stop tmp_container
 docker commit --change='CMD ~/init.sh' tmp_container $docker_image_name
