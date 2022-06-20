@@ -1,7 +1,7 @@
 .jupyter_password
 .ssh_password
 .docker_image_name
-.ws_path
+.ws_dir
 .tb_dir
 
 # Byte-compiled / optimized / DLL files

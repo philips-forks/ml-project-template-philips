@@ -9,9 +9,10 @@ ARG uid=1000
 ARG gid=1000
 ARG userpwd=passwd
 RUN groupadd -f -g $gid $groupname \
-    && useradd -u $uid -g $gid -s /bin/bash -d /home/$username $username \
+    && useradd --badnames -u $uid -g $gid -s /bin/bash -d /home/$username $username \
     && sh -c "echo $username:$userpwd | chpasswd" \
     && mkdir -p /home/$username/.ssh \
+    && mkdir -p /home/$username/.jupyter \
     && echo export PATH=$PATH > /etc/environment \
     && echo export http_proxy=$http_proxy >> /etc/environment \
     && echo export https_proxy=$https_proxy >> /etc/environment \
@@ -43,7 +44,7 @@ RUN apt-get update \
 
 
 # ----------------------------------- Switch to user ------------------------------------
-USER $username
+USER $uid
 
 
 # ----------------------------- Install conda dependencies ------------------------------
