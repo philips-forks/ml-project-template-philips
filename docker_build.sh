@@ -17,7 +17,7 @@ echo ""
 echo $password > .jupyter_password
 echo $ssh_password > .ssh_password
 echo $docker_image_name > .docker_image_name
-echo "" > .ws_path
+echo "" > .ws_dir
 echo "" > .tb_dir
 
 
