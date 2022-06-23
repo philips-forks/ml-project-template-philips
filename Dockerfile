@@ -62,7 +62,7 @@ RUN conda update -n base conda \
 # ------------------- Configure Jupyter and Tensorboard individually --------------------
 COPY --chown=$username:$groupname .jupyter_password set_jupyter_password.py /home/$username/.jupyter/
 RUN conda install -y jupyterlab ipywidgets tensorboard \
-    && python /home/$username/.jupyter/set_jupyter_password.py $username
+    && python /home/$username/.jupyter/set_jupyter_password.py /home/$username
 
 RUN echo "#!/bin/sh" > ~/init.sh \
     && echo "/opt/conda/bin/jupyter lab --no-browser &" >> ~/init.sh \

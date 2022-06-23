@@ -48,6 +48,9 @@ tb_port=${tb_port:-6006}
 read -p "SSH port [22]: " ssh_port
 ssh_port=${ssh_port:-22}
 
+# ------------------ Get container user (depends on rootless Docker) --------------------
+user=$(cat .user)
+
 while [ true ]
 do
 
@@ -62,7 +65,7 @@ do
             -v $HOME/.ssh:$HOME/.ssh \
             -v ${PWD}:/code \
             -v $ws:/ws \
-            --user $(id -u):$(id -g) \
+            --user $user \
             --shm-size 32G \
             -p 127.0.0.1:$jupyter_port:8888 \
             -p 127.0.0.1:$tb_port:6006 \
@@ -82,7 +85,7 @@ do
             -v $HOME/.ssh:$HOME/.ssh \
             -v ${PWD}:/code \
             -v $ws:/ws \
-            --user $(id -u):$(id -g) \
+            --user $user \
             --shm-size 32G \
             -p 127.0.0.1:$jupyter_port:8888 \
             -p 127.0.0.1:$tb_port:6006 \

@@ -3,6 +3,7 @@
 .docker_image_name
 .ws_dir
 .tb_dir
+.user
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
