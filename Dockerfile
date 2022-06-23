@@ -8,6 +8,10 @@ ARG groupname=user
 ARG uid=1000
 ARG gid=1000
 ARG userpwd=passwd
+ARG http_proxy=''
+ARG https_proxy=''
+ARG HTTP_PROXY=''
+ARG HTTPS_PROXY=''
 RUN groupadd -f -g $gid $groupname \
     && useradd --badnames -u $uid -g $gid -s /bin/bash -d /home/$username $username \
     && sh -c "echo $username:$userpwd | chpasswd" \
