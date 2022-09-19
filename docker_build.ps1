@@ -22,7 +22,6 @@ Write-Output "" | Out-File ".tb_dir" -Encoding ASCII
 docker build -t $docker_image_name `
     --build-arg username=$env:UserName `
     --build-arg userpwd=$ssh_string `
-    --build-arg userpwd=$ssh_password `
     --build-arg http_proxy=$env:http_proxy `
     --build-arg https_proxy=$env:https_proxy `
     --build-arg HTTP_PROXY=$env:HTTP_PROXY `
