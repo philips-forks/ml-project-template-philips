@@ -10,8 +10,6 @@ ARG gid=1000
 ARG userpwd=passwd
 ARG http_proxy=''
 ARG https_proxy=''
-ARG HTTP_PROXY=''
-ARG HTTPS_PROXY=''
 RUN groupadd -f -g $gid $groupname \
     && useradd --badnames -u $uid -g $gid -s /bin/bash -d /home/$username $username \
     && sh -c "echo $username:$userpwd | chpasswd" \
@@ -20,10 +18,11 @@ RUN groupadd -f -g $gid $groupname \
     && echo export PATH=$PATH > /etc/environment \
     && echo export http_proxy=$http_proxy >> /etc/environment \
     && echo export https_proxy=$https_proxy >> /etc/environment \
-    && echo export HTTP_PROXY=$HTTP_PROXY >> /etc/environment \
-    && echo export HTTPS_PROXY=$HTTPS_PROXY >> /etc/environment \
-    && echo "Acquire::http::Proxy \"$HTTP_PROXY\";" >> /etc/apt/apt.conf.d/10proxy \
-    && echo "Acquire::https::Proxy \"$HTTPS_PROXY\";" >> /etc/apt/apt.conf.d/10proxy \
+    && echo export HTTP_PROXY=$http_proxy >> /etc/environment \
+    && echo export HTTPS_PROXY=$https_proxy >> /etc/environment \
+    && echo "Acquire::http::Proxy \"$http_proxy\";" >> /etc/apt/apt.conf.d/10proxy \
+    && echo "Acquire::https::Proxy \"$https_proxy\";" >> /etc/apt/apt.conf.d/10proxy \
+    && echo "proxy_servers:\n http: $http_proxy\n https: $https_proxy" > /home/$username/.condarc \
     && chown -R $username:$groupname /home/$username \
     && chown -R $username:$groupname /opt/conda
 

@@ -6,18 +6,17 @@ ENV PYTHONUNBUFFERED 1
 ARG userpwd=passwd
 ARG http_proxy=''
 ARG https_proxy=''
-ARG HTTP_PROXY=''
-ARG HTTPS_PROXY=''
 RUN sh -c "echo root:$userpwd | chpasswd" \
     && mkdir -p /root/.ssh \
     && mkdir -p /root/.jupyter \
     && echo "export PATH=$PATH" > /root/.bashrc \
     && echo "export http_proxy=$http_proxy" >> /root/.bashrc \
     && echo "export https_proxy=$https_proxy" >> /root/.bashrc \
-    && echo "export HTTP_PROXY=$HTTP_PROXY" >> /root/.bashrc \
-    && echo "export HTTPS_PROXY=$HTTPS_PROXY" >> /root/.bashrc \
-    && echo "Acquire::http::Proxy \"$HTTP_PROXY\";" >> /etc/apt/apt.conf.d/10proxy \
-    && echo "Acquire::https::Proxy \"$HTTPS_PROXY\";" >> /etc/apt/apt.conf.d/10proxy
+    && echo "export HTTP_PROXY=$http_proxy" >> /root/.bashrc \
+    && echo "export HTTPS_PROXY=$https_proxy" >> /root/.bashrc \
+    && echo "Acquire::http::Proxy \"$http_proxy\";" >> /etc/apt/apt.conf.d/10proxy \
+    && echo "Acquire::https::Proxy \"$https_proxy\";" >> /etc/apt/apt.conf.d/10proxy \
+    && echo "proxy_servers:\n http: $http_proxy\n https: $https_proxy" > /root/.condarc
 
 
 # -------------------------- Install essential Linux packages ---------------------------

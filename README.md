@@ -8,6 +8,7 @@
 ## Quick start
 
 1. **Edit project requirements** in `environment.yaml`
+1. **If you are under proxy**, do not forget to set up environment proxy variable: `$http_proxy` & `$https_proxy` in Linux and `$env:http_proxy` & `$env:https_proxy` in Windows.
 2. **Build:**
 * In Linux shell: `bash docker_build.sh`
 * In Windows PowerShell: `.\docker_build.ps1` or right-click -> "Run with Powershell"
