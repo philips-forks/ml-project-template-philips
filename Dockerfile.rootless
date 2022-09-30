@@ -41,9 +41,9 @@ RUN apt-get update \
 # ----------------------------- Install conda dependencies ------------------------------
 COPY environment.yaml /root/conda_environment.yaml
 COPY requirements.txt /root/requirements.txt
-RUN conda update -n base conda \
-    && conda env update -n base -f /root/conda_environment.yaml --prune \
-    && xargs -L 1 pip install --no-cache-dir < /root/requirements.txt
+RUN conda update -n base conda
+RUN conda env update -n base -f /root/conda_environment.yaml --prune
+RUN xargs -L 1 pip install --no-cache-dir < /root/requirements.txt
  
 
 # ------------------- Configure Jupyter and Tensorboard individually --------------------
