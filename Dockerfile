@@ -53,9 +53,9 @@ USER $uid
 # ----------------------------- Install conda dependencies ------------------------------
 COPY environment.yaml /home/$username/conda_environment.yaml
 COPY requirements.txt /home/$username/requirements.txt
-RUN conda update -n base conda \
-    && conda env update -n base -f /home/$username/conda_environment.yaml --prune \
-    && xargs -L 1 pip install --no-cache-dir < /home/$username/requirements.txt
+RUN conda update -n base conda
+RUN conda env update -n base -f /home/$username/conda_environment.yaml --prune
+RUN xargs -L 1 pip install --no-cache-dir < /home/$username/requirements.txt
  
 
 # ------------------- Configure Jupyter and Tensorboard individually --------------------
