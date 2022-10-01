@@ -1,39 +1,59 @@
-FROM condaforge/miniforge3
-
+FROM condaforge/miniforge3:4.12.0-0
 ENV PYTHONUNBUFFERED 1
 
-# Add user to avoid root access to attached dirs
-ARG username=user
-ARG groupname=user
-ARG uid=1000
-ARG gid=1000
-RUN groupadd -f -g $gid $groupname \
-    && useradd -u $uid -g $gid -s /bin/bash -d /home/$username $username \
-    && mkdir /home/$username \
-    && chown -R $username:$groupname /home/$username \
-    && echo PATH=$PATH > /etc/environment \
-    && chmod a+w /opt/conda
 
-# Install essential Linux packages
+# ---------------------------------- Initializization -----------------------------------
+ARG userpwd=passwd
+RUN sh -c "echo root:$userpwd | chpasswd" \
+    && mkdir -p /root/.ssh \
+    && mkdir -p /root/.jupyter
+
+
+# -------------------------- Install essential Linux packages ---------------------------
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    build-essential git curl wget unzip vim screen \
-    && rm -rf /var/lib/apt/lists/*
+    build-essential \
+    git \
+    git-lfs \
+    curl \
+    wget \
+    unzip \
+    vim \
+    screen \
+    tmux \
+    python3-opencv \
+    openssh-server \
+    && mkdir /var/run/sshd \
+    && rm -rf /var/lib/apt/lists/* \
+    && git lfs install
 
 
-# Install dependencies. Prioritize conda-forge channel (not restricted for for corporate users)
-COPY environment.yaml /$username/conda_environment.yaml
-RUN conda update -n base conda \
-    && conda env update -n base -f /$username/conda_environment.yaml --prune
+# ----------------------------- Install conda dependencies ------------------------------
+COPY environment.yaml /root/conda_environment.yaml
+COPY requirements.txt /root/requirements.txt
+RUN conda update -n base conda
+RUN conda env update -n base -f /root/conda_environment.yaml
+RUN xargs -L 1 pip install --no-cache-dir < /root/requirements.txt
+ 
 
-# Configure Jupyter individually (to not to include in the requirements)
-COPY --chown=$username:$groupname .jupyter_password set_jupyter_password.py /home/$username/.jupyter/
-RUN conda install jupyterlab \
-    && conda clean --all --yes \
-    && su $username -c "python /home/$username/.jupyter/set_jupyter_password.py $username"
+# ------------------- Configure Jupyter and Tensorboard individually --------------------
+COPY .jupyter_password set_jupyter_password.py /root/.jupyter/
+RUN conda install -y jupyterlab ipywidgets tensorboard \
+    && python /root/.jupyter/set_jupyter_password.py /root
 
-USER $username
+RUN echo "#!/bin/sh" > ~/init.sh \
+    && echo "/opt/conda/bin/jupyter lab --allow-root --no-browser &" >> ~/init.sh \
+    && echo "/opt/conda/bin/tensorboard --logdir=\$TB_DIR --bind_all" >> ~/init.sh \
+    && chmod +x ~/init.sh
+
+RUN conda clean --all --yes
+
+
+# ------------------------------------ Miscellaneous ------------------------------------
+ENV TB_DIR=/ws/experiments
 WORKDIR /code
 EXPOSE 8888
+EXPOSE 6006
+EXPOSE 22
 
-CMD ["jupyter", "lab", "--no-browser"]
+CMD ~/init.sh
