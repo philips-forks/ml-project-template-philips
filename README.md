@@ -25,7 +25,6 @@ Windows:
             }
         }
 1. **Rename** `./src/ml_project_template` into a custom name. After build you can import this module in python. You can add as many modules in `./src` as you want **before the build**. Do not forget, that each module should include `__init__.py` to be taken into account.
-1. **Edit project requirements** in `environment.yaml`
 1. **Add pip install arguments** into `requirements.txt`. The file will be used with a command: `xargs -L 1 pip install --no-cache-dir < requirements.txt`. This means that each line will be executed as `pip install <line in requirements.txt>`
 1. Add Pyton-installable libs into `./libs`. They will be installed during the build and can be imported in python directly.
 

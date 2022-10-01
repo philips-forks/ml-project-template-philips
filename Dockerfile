@@ -1,5 +1,7 @@
-FROM condaforge/miniforge3:4.12.0-0
+FROM nvcr.io/nvidia/pytorch:22.03-py3
 ENV PYTHONUNBUFFERED 1
+ENV PATH="${PATH}:/opt/hpcx/ompi/bin"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/opt/hpcx/ompi/lib"
 
 
 # ---------------------------------- Initializization -----------------------------------
@@ -28,25 +30,21 @@ RUN apt-get update \
     && git lfs install
 
 
-# ----------------------------- Install conda dependencies ------------------------------
-COPY environment.yaml /root/conda_environment.yaml
+# ----------------------------- Install dependencies ------------------------------
 COPY requirements.txt /root/requirements.txt
-RUN conda update -n base conda
-RUN conda env update -n base -f /root/conda_environment.yaml
-RUN xargs -L 1 pip install --no-cache-dir < /root/requirements.txt
+RUN sed -i '/^$/d' /root/requirements.txt \
+    && xargs -L 1 pip install --no-cache-dir < /root/requirements.txt
  
 
 # ------------------- Configure Jupyter and Tensorboard individually --------------------
 COPY .jupyter_password set_jupyter_password.py /root/.jupyter/
-RUN conda install -y jupyterlab ipywidgets tensorboard \
+RUN pip install jupyterlab ipywidgets tensorboard \
     && python /root/.jupyter/set_jupyter_password.py /root
 
 RUN echo "#!/bin/sh" > ~/init.sh \
     && echo "/opt/conda/bin/jupyter lab --allow-root --no-browser &" >> ~/init.sh \
     && echo "/opt/conda/bin/tensorboard --logdir=\$TB_DIR --bind_all" >> ~/init.sh \
     && chmod +x ~/init.sh
-
-RUN conda clean --all --yes
 
 
 # ------------------------------------ Miscellaneous ------------------------------------
