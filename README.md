@@ -1,10 +1,16 @@
 # Machine learning project template
+This template was prepared to facilitate the routine of Docker image preparation for a typical deep learning project. Core idea of this template is usability. You need to do just a few steps and you are ready for running your experiments!
+
+If you need to share the container you can share this folder evolved and Docker tarred image (`docker save my-image:latest > my-image.tar`), then your counterpart can easily run it with `bash docker_start.(sh | ps1)` and, voila!, they get the same enviroment as you!
 
 
 ## Requirements:
-* [Docker with GPU support on Windows 10/11](https://github.com/lobantseff/template-ml-project/blob/master/docs/WINDOWS_DOCKER_GPU.md)
+Linux:
 * [Docker with GPU support on Linux](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-* For Linux systems. [Rootless Docker](https://docs.docker.com/engine/security/rootless/)
+* [Rootless Docker](https://docs.docker.com/engine/security/rootless/)
+
+Windows:
+* [Docker with GPU support on Windows 10/11](https://github.com/lobantseff/template-ml-project/blob/master/docs/WINDOWS_DOCKER_GPU.md)
 
 ## Build image
 
@@ -66,6 +72,7 @@ The idea behind this template is to be able to store lightweight code and heavy 
   ├── docker_run.ps1
   ├── docker_run.sh
   ├── environment.yaml
+  ├── requirements.txt
   ├── set_jupyter_password.py
   └── setup.py
   
