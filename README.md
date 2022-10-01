@@ -29,7 +29,7 @@ Windows:
 1. **Add pip install arguments** into `requirements.txt`. The file will be used with a command: `xargs -L 1 pip install --no-cache-dir < requirements.txt`. This means that each line will be executed as `pip install <line in requirements.txt>`
 1. Add Pyton-installable libs into `./libs`. They will be installed during the build and can be imported in python directly.
 
-1. **Build:**
+1. **Build image**
 * In Linux shell: `bash docker_build.sh`
 * In Windows PowerShell: `.\docker_build.ps1` or right-click -> "Run with Powershell"
 * Follow prompts. Workspace dir is a directory on the host machine. Provide the full path, please.
@@ -39,6 +39,15 @@ Windows:
 * In Windows PowerShell: `.\docker_start.ps1` or right-click -> "Run with Powershell"
 * **Follow prompts**. The ports you are asked to set-up are the host ports, advice available ports to your system admin if you work on remote server, or specify free ports if you work on local machine. 
 
+## Update image
+* You can access container by the comand: `docker exec -it CONTAINER_NAME bash`  
+* Then install as many pip packages as you want (do not forget to add them into `requirements.txt`)  
+* At the end you can update the image with the command: `docker commit --change=CMD ~/init.sh CONTAINER_NAME IMAGE_NAME`
+
+## Share image
+* Share the repo and then either build the image on new machine, or compress and decompress the image on a new machine :
+* `docker save IMAGE_NAME:latest > my-image.tar`
+* `docker load < my-image.tar`
   
 ## Notes:
 - On Windows machine. If PowerShell says "execution of scripts is disabled on this system", you can  run in powershell with admin rights: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine` to allow scripts execution. But do it with caution, since some scripts can be vulnerable. For the details follow the [link](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
