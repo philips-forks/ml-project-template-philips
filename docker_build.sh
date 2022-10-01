@@ -3,27 +3,6 @@ set -e
 
 echo "------------------------ Hi, let's set up your project! ------------------------"
 
-# ------------------ Select Dockerfile based on system Docker setup ---------------------
-while [ true ]
-do
-    read -p "Are you using rootless Docker? [y/n]: " resp
-    resp=${resp:-" "}
-    if [[ $resp == "y" ]]
-    then
-        dockerfile=Dockerfile.rootless
-        echo 0:0 > .user
-        break
-    elif [[ $resp == "n" ]]
-    then
-        dockerfile=Dockerfile
-        echo $(id -u):$(id -g) > .user
-        break
-    else
-        echo "Provide y or n"
-    fi
-done
-
-
 # ---------------------------- Prompts to define variables  -----------------------------
 curdir=${PWD##*/}
 read -r -p "Set up Docker image name[:tag] [$curdir]: " docker_image_name
@@ -44,14 +23,7 @@ echo "" > .tb_dir
 
 # ------------------------------------ Build docker -------------------------------------
 docker build -t $docker_image_name \
-    --build-arg username=$(whoami) \
-    --build-arg groupname=$(id -g -n) \
-    --build-arg uid=$(id -u) \
-    --build-arg gid=$(id -g) \
     --build-arg userpwd=$ssh_password \
-    --build-arg http_proxy=$http_proxy \
-    --build-arg https_proxy=$https_proxy \
-    -f $dockerfile \
     .
 
 

@@ -101,7 +101,7 @@ echo "------------------------ CONTAINER IS SUCCESSFULLY STARTED ---------------
 echo "- Jupyter Lab is now available at: localhost:$jupyter_port/lab" 
 echo "- Jupyter Notebook is available at: localhost:$jupyter_port/tree"
 echo ""
-echo "- Connect to container via SSH: ssh -p $ssh_port $env:UserName@localhost"
+echo "- Connect to container via SSH: ssh -p $ssh_port root@localhost"
 echo "- Inspect the container: docker exec -it $container_name bash"
 echo "- Update the image: docker commit --change='CMD ~/init.sh' updated_container_name_or_hash $docker_image_name"
 echo ""

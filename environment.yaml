@@ -2,29 +2,26 @@ name: base
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
+  #### Do not change Python version here!       ###
+  #### If you need Python of different version, ###
+  #### specify other base image in Dockerfile   ###
+  ####  - <channel>::package=0.0 ####
   # - pytorch::pytorch
   # - pytorch::torchvision
   # - cudatoolkit=11.3
-  # - matplotlib
-  # - numpy
-  # - pandas
-  # - opencv
-  # - py-opencv
-  # - ipywidgets
-  # - scipy
-  # - seaborn
-  # - scikit-image
-  # - scikit-learn
-  - pip
-  - pip:
-    # - albumentations
-    # - black
-    # - flake8
-    # - Pillow
-    # - pretrainedmodels
-    # - pydicom
-    # - pytorch-lightning
-    # - torchinfo
-    # - tqdm
-    # - statsmodels
+  # - pytorch-lightning
+  # - torchinfo
+  - albumentations
+  - black
+  - flake8
+  - matplotlib
+  - numpy
+  - pandas
+  - opencv
+  - pillow
+  - scipy
+  - seaborn
+  - scikit-image
+  - scikit-learn
+  - statsmodels
+  - tqdm

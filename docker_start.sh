@@ -48,8 +48,7 @@ tb_port=${tb_port:-6006}
 read -p "SSH port [22]: " ssh_port
 ssh_port=${ssh_port:-22}
 
-# ------------------ Get container user (depends on rootless Docker) --------------------
-user=$(cat .user)
+# -------------------------------- Start the container ----------------------------------
 
 while [ true ]
 do
@@ -65,7 +64,6 @@ do
             -v $HOME/.ssh:$HOME/.ssh \
             -v ${PWD}:/code \
             -v $ws:/ws \
-            --user $user \
             --shm-size 32G \
             -p 127.0.0.1:$jupyter_port:8888 \
             -p 127.0.0.1:$tb_port:6006 \
@@ -85,7 +83,6 @@ do
             -v $HOME/.ssh:$HOME/.ssh \
             -v ${PWD}:/code \
             -v $ws:/ws \
-            --user $user \
             --shm-size 32G \
             -p 127.0.0.1:$jupyter_port:8888 \
             -p 127.0.0.1:$tb_port:6006 \
@@ -105,7 +102,7 @@ echo ------------------------ CONTAINER IS SUCCESSFULLY STARTED ----------------
 echo - Jupyter Lab is available at: localhost:$jupyter_port/lab  
 echo - Jupyter Notebook is available at: localhost:$jupyter_port/tree
 echo
-echo - Connect to container via SSH: ssh -p $ssh_port $(whoami)@localhost
+echo - Connect to container via SSH: ssh -p $ssh_port root@localhost
 echo - Inspect the container: docker exec -it $container_name bash
 echo - Update the image: docker commit --change='CMD ~/init.sh' updated_container_name_or_hash $docker_image_name
 echo
@@ -128,8 +125,4 @@ echo ---------------------------------------------------------------------------
 #            as /ws folder. All changes in the /ws folder are changes in the attached folder.
 # -p 8888:8888: maps host port 8888 to 8888 port in teh container. The former is host port, 
 #               the latter is the container port (8888 is default port for jupyter)
-# --user $(id -u):$(id -u): run container under current user.
-#                           By default container is run by root user, hence all files in 
-#                           /code and /ws are created under the root user. Usually this is
-#                           undesirable behaviour.
 # --name container_name: give a name to the created container

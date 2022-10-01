@@ -4,21 +4,37 @@
 ## Requirements:
 * [Docker with GPU support on Windows 10/11](https://github.com/lobantseff/template-ml-project/blob/master/docs/WINDOWS_DOCKER_GPU.md)
 * [Docker with GPU support on Linux](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+* For Linux systems. [Rootless Docker](https://docs.docker.com/engine/security/rootless/)
 
-## Quick start
+## Build image
 
+1. Add proxy setting in the `~/.docker/config.json`:
+
+        {
+            "proxies": {
+                "default": {
+                    "httpProxy": "http://address.proxy.com:8888/",
+                    "httpsProxy": "http://address.proxy.com:8888/"
+                }
+            }
+        }
+1. **Rename** `./src/ml_project_template` into a custom name. After build you can import this module in python. You can add as many modules in `./src` as you want **before the build**. Do not forget, that each module should include `__init__.py` to be taken into account.
 1. **Edit project requirements** in `environment.yaml`
-1. **If you are under proxy**, do not forget to set up environment proxy variable: `$http_proxy` & `$https_proxy` in Linux and `$env:http_proxy` & `$env:https_proxy` in Windows.
-2. **Build:**
+1. **Add pip install arguments** into `requirements.txt`. The file will be used with a command: `xargs -L 1 pip install --no-cache-dir < requirements.txt`. This means that each line will be executed as `pip install <line in requirements.txt>`
+1. Add Pyton-installable libs into `./libs`. They will be installed during the build and can be imported in python directly.
+
+1. **Build:**
 * In Linux shell: `bash docker_build.sh`
 * In Windows PowerShell: `.\docker_build.ps1` or right-click -> "Run with Powershell"
+* Follow prompts. Workspace dir is a directory on the host machine. Provide the full path, please.
 
-3. **Start container:**
+## Start container
 * In Linux shell: `bash docker_start.sh`
 * In Windows PowerShell: `.\docker_start.ps1` or right-click -> "Run with Powershell"
+* **Follow prompts**. The ports you are asked to set-up are the host ports, advice available ports to your system admin if you work on remote server, or specify free ports if you work on local machine. 
 
   
-**Notes:**
+## Notes:
 - On Windows machine. If PowerShell says "execution of scripts is disabled on this system", you can  run in powershell with admin rights: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine` to allow scripts execution. But do it with caution, since some scripts can be vulnerable. For the details follow the [link](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
 - You can attach VSCode to a running container: [quick tutorial](https://github.com/lobantseff/template-ml-project/blob/master/docs/VSCODE.md), [documentation](https://code.visualstudio.com/docs/remote/containers)
 - To commit updates from a running container to the built image use:  
@@ -36,12 +52,12 @@ The idea behind this template is to be able to store lightweight code and heavy 
   |   ├── external_lib_as_submodule1/
   |   └── external_lib_as_submodule1/
   ├── src/
-  │   ├── template_ml_project/
+  │   ├── custom_module1/
   │   │   └── __init__.py
-  |   └── template_lib2/
+  |   └── custom_module2/
   |       └── __init__.py
   ├── notebooks
-  │   └── notebook_example.ipynb
+  │   └── jupyter_notebook_example.ipynb
   ├── .gitignore
   ├── Dockerfile
   ├── README.md
