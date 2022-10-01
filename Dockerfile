@@ -25,7 +25,8 @@ RUN apt-get update \
     openssh-server \
     && mkdir /var/run/sshd \
     && rm -rf /var/lib/apt/lists/* \
-    && git lfs install
+    && git lfs install \
+    && echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
 
 
 # ----------------------------- Install conda dependencies ------------------------------
