@@ -3,6 +3,8 @@ This template was prepared to facilitate the routine of Docker image preparation
 
 If you need to share the container you can share this folder evolved and Docker tarred image (`docker save my-image:latest > my-image.tar`), then your counterpart can easily run it with `bash docker_start.(sh | ps1)` and, voila!, they get the same enviroment as you!
 
+This version of the template is based on [NVIDIA PyTorch Release 22.03](https://docs.nvidia.com/deeplearning/frameworks/pytorch-release-notes/rel_22-03.html)
+
 
 ## Requirements:
 Linux:
@@ -26,7 +28,7 @@ Windows:
         }
 1. **Rename** `./src/ml_project_template` into a custom name. After build you can import this module in python. You can add as many modules in `./src` as you want **before the build**. Do not forget, that each module should include `__init__.py` to be taken into account.
 1. **Add pip install arguments** into `requirements.txt`. The file will be used with a command: `xargs -L 1 pip install --no-cache-dir < requirements.txt`. This means that each line will be executed as `pip install <line in requirements.txt>`
-1. Add Pyton-installable libs into `./libs`. They will be installed during the build and can be imported in python directly.
+1. Add Pyton-installable libs into `./libs`. They will be installed during the build with `pip install -e <lib>` and can be imported in python directly.
 
 1. **Build:**
 * In Linux shell: `bash docker_build.sh`
