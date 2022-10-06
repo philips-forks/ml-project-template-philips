@@ -38,16 +38,24 @@ Windows:
 ## Start container
 * In Linux shell: `bash docker_start.sh`
 * In Windows PowerShell: `.\docker_start.ps1` or right-click -> "Run with Powershell"
-* **Follow prompts**. The ports you are asked to set-up are the host ports, advice available ports to your system admin if you work on remote server, or specify free ports if you work on local machine. 
+* **Follow prompts**. You will be asked to define IMAGE_NAME, CONTAINER_NAME, JUPYTER_PORT, TENSORBOARD_PORT, SSH_PORT. The ports you are asked to set-up are the **host** ports, advice available ports to your system admin if you work on remote server, or specify free ports if you work on local machine. 
+
+    - Jupyter Lab is available at: `http://localhost:<JUPYTER_PORT>/lab  `
+    - Jupyter Notebook is available at: `http://localhost:<JUPYTER_PORT>/tree`
+    - Tensorboard is available at: `http://localhost:<TENSORBOARD_PORT>`, monitoring experiments in $tb.
+    - Connect to container via SSH: `ssh -p <SSH_PORT> root@localhost` (if you are under proxy, no connection to outer world => no package installation possible)
+    - Inspect the container: `docker exec -it <CONTAINER_NAME> bash` (if you are under proxy, install packages inside in this mode)
+    - Stop the container: `docker stop <CONTAINER_HASH>`
+    - Inside the container $ws will be available at /ws
 
 ## Update image
-* You can access container by the comand: `docker exec -it CONTAINER_NAME bash`  
+* You can access container by the comand: `docker exec -it <CONTAINER_NAME> bash`  
 * Then install as many pip packages as you want (do not forget to add them into `requirements.txt`)  
-* At the end you can update the image with the command: `docker commit --change=CMD ~/init.sh CONTAINER_NAME IMAGE_NAME`
+* At the end you can update the image with the command: `docker commit --change=CMD ~/init.sh <CONTAINER_NAME> <IMAGE_NAME>`
 
 ## Share image
 * Share the repo and then either build the image on new machine, or compress and decompress the image on a new machine :
-* `docker save IMAGE_NAME:latest > my-image.tar`
+* `docker save <IMAGE_NAME>:latest > my-image.tar`
 * `docker load < my-image.tar`
   
 ## Notes:
