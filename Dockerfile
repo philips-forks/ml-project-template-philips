@@ -6,7 +6,8 @@ ENV PYTHONUNBUFFERED 1
 ARG userpwd=passwd
 RUN sh -c "echo root:$userpwd | chpasswd" \
     && mkdir -p /root/.ssh \
-    && mkdir -p /root/.jupyter
+    && mkdir -p /root/.jupyter \
+    && /opt/conda/bin/conda init
 
 
 # -------------------------- Install essential Linux packages ---------------------------
