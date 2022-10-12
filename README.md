@@ -9,10 +9,10 @@ This version of the template is based on [NVIDIA PyTorch Release 22.03](https://
 ## Requirements:
 Linux:
 * [Docker with GPU support on Linux](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-* [Rootless Docker](https://docs.docker.com/engine/security/rootless/)
+* Optionally: [Rootless Docker](https://docs.docker.com/engine/security/rootless/)
 
 Windows:
-* [Docker with GPU support on Windows 10/11](https://github.com/lobantseff/template-ml-project/blob/master/docs/WINDOWS_DOCKER_GPU.md)
+* [Docker with GPU support on Windows 10/11](./docs/WINDOWS_DOCKER_GPU.md)
 
 ## Build image
 
@@ -31,13 +31,11 @@ Windows:
 1. Add Pyton-installable libs into `./libs`. They will be installed during the build with `pip install -e <lib>` and can be imported in python directly.
 
 1. **Build image**
-* In Linux shell: `bash docker_build.sh`
-* In Windows PowerShell: `.\docker_build.ps1` or right-click -> "Run with Powershell"
+* In Linux shell or WSL: `bash docker_build.sh`
 * Follow prompts. Workspace dir is a directory on the host machine. Provide the full path, please.
 
 ## Start container
-* In Linux shell: `bash docker_start.sh`
-* In Windows PowerShell: `.\docker_start.ps1` or right-click -> "Run with Powershell"
+* In Linux shell or WSL: `bash docker_start.sh`
 * **Follow prompts**. You will be asked to define IMAGE_NAME, CONTAINER_NAME, JUPYTER_PORT, TENSORBOARD_PORT, SSH_PORT. The ports you are asked to set-up are the **host** ports, advice available ports to your system admin if you work on remote server, or specify free ports if you work on local machine. 
 
     - Jupyter Lab is available at: `http://localhost:<JUPYTER_PORT>/lab  `
@@ -47,6 +45,12 @@ Windows:
     - Inspect the container: `docker exec -it <CONTAINER_NAME> bash` (if you are under proxy, install packages inside in this mode)
     - Stop the container: `docker stop <CONTAINER_HASH>`
     - Inside the container $ws will be available at /ws
+* If you want to define additional docker run parameters, just provide them after the command.  
+For example: `bash docker_start.sh -p 9898:9898`
+
+## Connect IDE to the running container:
+* VSCode: [Docker with GPU support on Windows 10/11](./docs/VSCODE.md)
+* PyCharm: TBD
 
 ## Update image
 * You can access container by the comand: `docker exec -it <CONTAINER_NAME> bash`  
