@@ -33,9 +33,17 @@ Windows:
 1. **Build image**
 * In Linux shell or WSL: `bash docker_build.sh`
 * Follow prompts. Workspace dir is a directory on the host machine. Provide the full path, please.
+    * To avoid interactive session you can provide the following arguments in the command: 
+    
+        ```bash
+        bash docker_build.sh \
+            --docker_image_name ml-project-template:tagged \
+            --jupyter_password JUPYTER_PASSWORD \
+            --ssh_password SSH_PASSWORD
+        ```
 
 ## Start container
-* In Linux shell or WSL: `bash docker_start.sh`
+* In Linux shell or WSL: `bash docker_start_interactive.sh`
 * **Follow prompts**. You will be asked to define IMAGE_NAME, CONTAINER_NAME, JUPYTER_PORT, TENSORBOARD_PORT, SSH_PORT. The ports you are asked to set-up are the **host** ports, advice available ports to your system admin if you work on remote server, or specify free ports if you work on local machine. 
 
     - Jupyter Lab is available at: `http://localhost:<JUPYTER_PORT>/lab  `
@@ -46,7 +54,9 @@ Windows:
     - Stop the container: `docker stop <CONTAINER_HASH>`
     - Inside the container $ws will be available at /ws
 * If you want to define additional docker run parameters, just provide them after the command.  
-For example: `bash docker_start.sh -p 9898:9898`
+For example: `bash docker_start_interactive.sh -p 9898:9898`
+### Custom start
+* Refer to `docker_start_noninteractive.sh`
 
 ## Connect IDE to the running container:
 * VSCode: [Docker with GPU support on Windows 10/11](./docs/VSCODE.md)

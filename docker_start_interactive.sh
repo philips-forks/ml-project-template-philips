@@ -18,6 +18,7 @@ ws=${ws:-$ws_dump}
 if [ "$ws" ]
 then
     echo $ws > .ws_dir
+    mkdir -p $ws/experiments
 fi
 
 # ---------------------------- Prompt for tensorboard folder ----------------------------
