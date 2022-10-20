@@ -26,7 +26,7 @@ Windows:
                 }
             }
         }
-1. **Rename** `./src/ml_project_template` into a custom name. After build you can import this module in python. You can add as many modules in `./src` as you want **before the build**. Do not forget, that each module should include `__init__.py` to be taken into account.
+1. **Rename or add planned packages** `./src/package_name0` into a custom name. After the build you can import this module in python. You can add as many modules in `./src` as you want **before the build**. Do not forget, that each module should include `__init__.py` to be taken into account.
 1. **Add pip install arguments** into `requirements.txt`. The file will be used with a command: `xargs -L 1 pip install --no-cache-dir < requirements.txt`. This means that each line will be executed as `pip install <line in requirements.txt>`
 1. Add Pyton-installable libs into `./libs`. They will be installed during the build with `pip install -e <lib>` and can be imported in python directly.
 
@@ -74,7 +74,7 @@ For example: `bash docker_start_interactive.sh -p 9898:9898`
   
 ## Notes:
 - On Windows machine. If PowerShell says "execution of scripts is disabled on this system", you can  run in powershell with admin rights: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine` to allow scripts execution. But do it with caution, since some scripts can be vulnerable. For the details follow the [link](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/set-executionpolicy?view=powershell-7.2).
-- You can attach VSCode to a running container: [quick tutorial](https://github.com/lobantseff/template-ml-project/blob/master/docs/VSCODE.md), [documentation](https://code.visualstudio.com/docs/remote/containers)
+- You can attach VSCode to a running container: [quick tutorial](./docs/VSCODE.md), [documentation](https://code.visualstudio.com/docs/remote/containers)
 - To commit updates from a running container to the built image use:  
     `docker commit --change='CMD ~/init.sh' updated_container_name_or_hash docker_image_name`  
     (_not recommended as a daily practice, good practice is to update the environment.yaml, requirements.txt or Dockerfile_)
