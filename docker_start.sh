@@ -61,7 +61,7 @@ do
             --restart unless-stopped \
             --gpus $gpus \
             -d \
-            -v $HOME/.ssh:$HOME/.ssh \
+            -v $HOME/.ssh:/root/.ssh \
             -v ${PWD}:/code \
             -v $ws:/ws \
             --shm-size 32G \
