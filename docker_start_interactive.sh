@@ -18,6 +18,7 @@ ws=${ws:-$ws_dump}
 if [ "$ws" ]
 then
     echo $ws > .ws_dir
+    mkdir -p $ws/experiments
 fi
 
 # ---------------------------- Prompt for tensorboard folder ----------------------------
@@ -70,6 +71,7 @@ do
             -p 127.0.0.1:$ssh_port:22 \
             -e TB_DIR=$tb \
             --name $container_name \
+            $@ \
             $docker_image_name
         docker exec --user=root $container_name service ssh start
         break
@@ -89,6 +91,7 @@ do
             -p 127.0.0.1:$ssh_port:22 \
             -e TB_DIR=$tb \
             --name $container_name \
+            $@ \
             $docker_image_name
         docker exec --user=root $container_name service ssh start
         break

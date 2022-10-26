@@ -6,8 +6,7 @@ ENV PYTHONUNBUFFERED 1
 ARG userpwd=passwd
 RUN sh -c "echo root:$userpwd | chpasswd" \
     && mkdir -p /root/.ssh \
-    && mkdir -p /root/.jupyter \
-    && /opt/conda/bin/conda init
+    && mkdir -p /root/.jupyter
 
 
 # -------------------------- Install essential Linux packages ---------------------------
@@ -22,6 +21,7 @@ RUN apt-get update \
     vim \
     screen \
     tmux \
+    htop \
     python3-opencv \
     openssh-server \
     && mkdir /var/run/sshd \
@@ -30,17 +30,17 @@ RUN apt-get update \
     && echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config
 
 
-# ----------------------------- Install conda dependencies ------------------------------
+# ----------------------------- Install dependencies ------------------------------
 COPY environment.yaml /root/conda_environment.yaml
 COPY requirements.txt /root/requirements.txt
-RUN conda update -n base conda
 RUN conda env update -n base -f /root/conda_environment.yaml
+# xargs are used to make possible use git+https://... states in requirements.txt
 RUN xargs -L 1 pip install --no-cache-dir < /root/requirements.txt
  
 
 # ------------------- Configure Jupyter and Tensorboard individually --------------------
 COPY .jupyter_password set_jupyter_password.py /root/.jupyter/
-RUN conda install -y jupyterlab ipywidgets tensorboard \
+RUN pip install jupyterlab ipywidgets tensorboard \
     && python /root/.jupyter/set_jupyter_password.py /root
 
 RUN echo "#!/bin/sh" > ~/init.sh \
@@ -48,7 +48,7 @@ RUN echo "#!/bin/sh" > ~/init.sh \
     && echo "/opt/conda/bin/tensorboard --logdir=\$TB_DIR --bind_all" >> ~/init.sh \
     && chmod +x ~/init.sh
 
-RUN conda clean --all --yes
+RUN conda clean --all --yes && conda init
 
 
 # ------------------------------------ Miscellaneous ------------------------------------
