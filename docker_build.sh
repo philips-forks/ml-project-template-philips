@@ -54,7 +54,7 @@ docker build -t $docker_image_name \
 docker run -dt -v ${PWD}:/code --name tmp_container $docker_image_name
 for lib in $(ls ./libs)
     do
-        if test -f /code/libs/$lib/setup.py; then
+        if test -f ./libs/$lib/setup.py; then
             echo "Installing $lib"
             docker exec tmp_container pip install -e /code/libs/$lib/.
         else 
