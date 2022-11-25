@@ -1,4 +1,4 @@
-FROM condaforge/miniforge3:4.12.0-0
+FROM condaforge/miniforge3:22.9.0-2
 ENV PYTHONUNBUFFERED 1
 
 
@@ -32,11 +32,14 @@ RUN apt-get update \
 
 # ----------------------------- Install dependencies ------------------------------
 COPY environment.yaml /root/conda_environment.yaml
+RUN conda env update -n base -f /root/conda_environment.yaml \
+    && conda clean --all --yes \
+    && conda init
+
+# xargs are used to make possible use pip install flags in requirements.txt 
+# see https://pip.pypa.io/en/stable/cli/pip_install
 COPY requirements.txt /root/requirements.txt
-RUN conda env update -n base -f /root/conda_environment.yaml
-# xargs are used to make possible use git+https://... states in requirements.txt
-RUN xargs -L 1 pip install --no-cache-dir < /root/requirements.txt
- 
+RUN sed '/^#/d' /root/requirements.txt | xargs -L 1 pip install --no-cache-dir
 
 # ------------------- Configure Jupyter and Tensorboard individually --------------------
 COPY .jupyter_password set_jupyter_password.py /root/.jupyter/
