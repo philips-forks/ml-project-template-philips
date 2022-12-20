@@ -41,6 +41,7 @@ RUN conda env update -n base -f /root/conda_environment.yaml \
 COPY requirements.txt /root/requirements.txt
 RUN sed '/^#/d' /root/requirements.txt | xargs -L 1 pip install --no-cache-dir
 
+
 # ------------------- Configure Jupyter and Tensorboard individually --------------------
 COPY .jupyter_password set_jupyter_password.py /root/.jupyter/
 RUN pip install jupyterlab ipywidgets tensorboard \
@@ -50,8 +51,6 @@ RUN echo "#!/bin/sh" > ~/init.sh \
     && echo "/opt/conda/bin/jupyter lab --allow-root --no-browser &" >> ~/init.sh \
     && echo "/opt/conda/bin/tensorboard --logdir=\$TB_DIR --bind_all" >> ~/init.sh \
     && chmod +x ~/init.sh
-
-RUN conda clean --all --yes && conda init
 
 
 # ------------------------------------ Miscellaneous ------------------------------------
