@@ -3,7 +3,7 @@ This template was prepared to facilitate the routine of Docker image preparation
 
 If you need to share the container you can share this folder evolved and Docker tarred image (`docker save my-image:latest > my-image.tar`), then your counterpart can easily run it with `bash docker_start.(sh | ps1)` and, voila!, they get the same enviroment as you!
 
-This version of the template is based on [condaforge/miniforge3:4.12.0-0](https://hub.docker.com/layers/condaforge/miniforge3/4.12.0-0/images/sha256-784f8a0484efe4036ec185b469c656c6bb61d3bb5cc5dddedc06e95083db8f03?context=explore)
+This version of the template is based on [condaforge/miniforge3:22.9.0-2](https://hub.docker.com/layers/condaforge/miniforge3/22.9.0-2/images/sha256-f36832243d5dbb6f7f43a990198a1cb4ee98f983d2eea45ceb1313c87b4bb717?context=explore)
 
 
 ## Requirements:
