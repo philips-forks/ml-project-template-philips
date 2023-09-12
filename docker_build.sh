@@ -50,21 +50,22 @@ docker build -t $docker_image_name \
     .
 
 
+tmp_container_name=tmp_${docker_image_name}_$(echo -n "$(date +%N)" | md5sum | awk '{print $1}')
 # ----- Install user packages from ./src to the container and submodules from ./libs ----
-docker run -dt -v ${PWD}:/code --name tmp_container $docker_image_name
+docker run -dt -v ${PWD}:/code --name $tmp_container_name $docker_image_name
 for lib in $(ls ./libs)
     do
         if test -f ./libs/$lib/setup.py; then
             echo "Installing $lib"
-            docker exec tmp_container pip install -e /code/libs/$lib/.
+            docker exec $tmp_container_name pip install -e /code/libs/$lib/.
         else 
             echo "$lib does not have setup.py file to install."
         fi
     done
-docker exec tmp_container pip install -e /code/.
-docker stop tmp_container
-docker commit --change='CMD ~/init.sh' tmp_container $docker_image_name
-docker rm tmp_container &> /dev/null
+docker exec $tmp_container_name pip install -e /code/.
+docker stop $tmp_container_name
+docker commit --change='CMD ~/init.sh' $tmp_container_name $docker_image_name
+docker rm $tmp_container_name &> /dev/null
 
 
 echo "------------------ Build successfully finished! --------------------------------"
