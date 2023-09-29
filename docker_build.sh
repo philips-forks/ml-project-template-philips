@@ -50,9 +50,9 @@ docker build -t $docker_image_name \
     .
 
 
-tmp_container_name=tmp_${docker_image_name}_$(echo -n "$(date +%N)" | md5sum | awk '{print $1}')
+tmp_container_name=tmp_${docker_image_name}_$RANDOM
 # ----- Install user packages from ./src to the container and submodules from ./libs ----
-docker run -dt -v ${PWD}:/code --name $tmp_container_name $docker_image_name
+docker run -dt -v ${PWD}:/code --name $tmp_container_name $docker_image_name bash
 for lib in $(ls ./libs)
     do
         if test -f ./libs/$lib/setup.py; then
