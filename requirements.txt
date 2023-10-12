@@ -1,3 +1,5 @@
+# This file is readed by the installer line by line, like you would run `pip install <LINE>`
+
 albumentations
 black
 flake8
@@ -15,3 +17,6 @@ statsmodels
 
 # Example of direct installation from git
 git+https://github.com/tqdm/tqdm.git
+
+# Example of installation from an alternative index
+ torch --trusted-host https://download.pytorch.org --index-url https://download.pytorch.org/whl/cu118
