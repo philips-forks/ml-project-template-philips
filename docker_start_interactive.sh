@@ -2,7 +2,12 @@
 set -e
 
 # ------------- Read default image name from build output or manual input  --------------
-docker_image_name=$(cat .docker_image_name)
+if [ -e .docker_image_name ]; then
+    docker_image_name=$(cat .docker_image_name)
+else
+    docker_image_name=DOCKER_IMAGE_NAME
+fi
+
 read -r -p "Image [$docker_image_name]: " docker_image_name_input
 docker_image_name=${docker_image_name_input:-$docker_image_name}
 
@@ -12,7 +17,12 @@ read -r -p "Container name [$container_name]: " container_name_input
 container_name=${container_name_input:-$container_name}
 
 # ----------------------------- Prompt for workspace folder -----------------------------
-ws_dump=$(cat .ws_dir)
+if [ -e .ws_dir ]; then
+    ws_dump=$(cat .ws_dir)
+else
+    ws_dump=""
+fi
+
 read -r -p "Absolute path to the project workspace folder with data and experiment artifacts [$ws_dump]: " ws
 ws=${ws:-$ws_dump}
 if [ "$ws" ]
@@ -22,7 +32,12 @@ then
 fi
 
 # ---------------------------- Prompt for tensorboard folder ----------------------------
-tb_dump=$(cat .tb_dir)
+if [ -e .ws_dir ]; then
+    tb_dump=$(cat .tb_dir)
+else
+    tb_dump=""
+fi
+
 tb=${tb_dump:="/ws/experiments"}
 read -r -p "Relative path to the tensorboard logdir [$tb]: " tb
 tb=${tb:-$tb_dump}
@@ -38,15 +53,15 @@ gpus=\"'device=str'\"
 gpus=$(sed "s/str/$gpus_prompt/g" <<< $gpus)
 
 # ---------------------------- Prompt for host Jupyter port -----------------------------
-read -p "Jupyter port [8888]: " jupyter_port
+read -p "Jupyter forwarded port [XXXX] -> container's 8888: " jupyter_port
 jupyter_port=${jupyter_port:-8888}
 
 # -------------------------- Prompt for host TensorBoard port ---------------------------
-read -p "TensorBoard port [6006]: " tb_port
+read -p "TensorBoard forwarded port [XXXX] -> container's 6006: " tb_port
 tb_port=${tb_port:-6006}
 
 # ------------------------------ Prompt for host SSH port -------------------------------
-read -p "SSH port [22]: " ssh_port
+read -p "SSH forwarded port [XXXX] -> container's 22: " ssh_port
 ssh_port=${ssh_port:-22}
 
 # -------------------------------- Start the container ----------------------------------
