@@ -1,4 +1,4 @@
-# VSCode Remote devevelpment in Docker containers
+# VSCode Remote Development in Docker Containers
 
 ## Attaching to a container that is running on a local machine
 
@@ -18,7 +18,7 @@
 1. Open `/code` folder.
 1. Voilà!
 
-## OLD INSTRUCTIONS
+<!-- ## DEPRECATED INSTRUCTIONS
 
 ## Attaching to Docker run locally
 
@@ -74,4 +74,4 @@ My choice is:
         "ms-toolsai.jupyter-keymap",
         "ms-toolsai.jupyter-renderers",
         "njpwerner.autodocstring",
-    ],
+    ], -->
