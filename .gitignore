@@ -4,6 +4,8 @@
 .ws_dir
 .tb_dir
 .user
+.jupyter_port
+.tb_port
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

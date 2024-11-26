@@ -6,9 +6,7 @@ show_help() {
     echo "Usage: ./docker_build.sh <image_name[:tag]> [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  --install-jupyter                Install Jupyter"
     echo "  --jupyter-pwd <jupyterpwd>       Set Jupyter password"
-    echo "  --install-tensorboard            Install TensorBoard"
     echo "  -h, --help                       Show this help message"
 }
 
@@ -18,14 +16,6 @@ while [ $# -gt 0 ]; do
     --jupyter-pwd)
         jupyter_password="$2"
         shift 2
-        ;;
-    --install-jupyter)
-        install_jupyter=true
-        shift
-        ;;
-    --install-tensorboard)
-        install_tensorboard=true
-        shift
         ;;
     -h | --help)
         show_help
@@ -57,38 +47,19 @@ if [[ -z $jupyter_password ]]; then
 else
     echo Jupyter password parsed from args. Saved into '.jupyter_password'
 fi
-
-if [[ -z $install_jupyter ]]; then
-    read -r -p "Install Jupyter? (y/n): " install_jupyter
-    install_jupyter=${install_jupyter,,}   # to lowercase
-    install_jupyter=${install_jupyter:0:1} # first character
-    install_jupyter=$([[ $install_jupyter == "y" ]] && echo true || echo false)
-else
-    echo "Install Jupyter parsed from args: $install_jupyter"
-fi
-
-if [[ -z $install_tensorboard ]]; then
-    read -r -p "Install TensorBoard? (y/n): " install_tensorboard
-    install_tensorboard=${install_tensorboard,,}   # to lowercase
-    install_tensorboard=${install_tensorboard:0:1} # first character
-    install_tensorboard=$([[ $install_tensorboard == "y" ]] && echo true || echo false)
-else
-    echo "Install TensorBoard parsed from args: $install_tensorboard"
-fi
-
 echo $jupyter_password >.jupyter_password
+
 echo $docker_image_name >.docker_image_name
 echo "" >.ws_dir
 echo "" >.tb_dir
 
-# ------------------------------------ Build docker -------------------------------------
+echo "------------------------------------ Building image -------------------------------------"
 docker build -t $docker_image_name \
     --build-arg JUPYTERPWD=$jupyter_password \
-    --build-arg INSTALL_JUPYTER=$install_jupyter \
-    --build-arg INSTALL_TENSORBOARD=$install_tensorboard \
     .
 
 # ----- Install user packages from ./src to the container and submodules from ./libs ----
+echo "---------------------- Installing user packages and submodules --------------------------"
 tmp_container_name=tmp_${docker_image_name%%:*}_$RANDOM
 docker run -dt -v ${PWD}:/code --name $tmp_container_name --entrypoint="" $docker_image_name bash
 for lib in $(ls ./libs); do
@@ -104,5 +75,5 @@ docker stop $tmp_container_name
 docker commit --change='CMD ~/init.sh' $tmp_container_name $docker_image_name
 docker rm $tmp_container_name &>/dev/null
 
-echo "------------------ Build successfully finished! --------------------------------"
-echo "------------------ Start the container: bash docker_start_interactive.sh -------------------"
+echo "------------------------ Build successfully finished! --------------------------------------"
+echo "------------------- Start a container: bash docker_start_interactive.sh --------------------"

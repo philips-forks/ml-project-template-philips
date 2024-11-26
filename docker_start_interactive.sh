@@ -25,9 +25,8 @@ fi
 
 read -r -p "Absolute path to the project workspace folder with data and experiment artifacts [$ws_dump]: " ws
 ws=${ws:-$ws_dump}
-if [ "$ws" ]
-then
-    echo $ws > .ws_dir
+if [ "$ws" ]; then
+    echo $ws >.ws_dir
     mkdir -p $ws/experiments
 fi
 
@@ -41,40 +40,48 @@ fi
 tb=${tb_dump:="/ws/experiments"}
 read -r -p "Relative path to the tensorboard logdir [$tb]: " tb
 tb=${tb:-$tb_dump}
-if [ "$tb" ]
-then
-    echo $tb > .tb_dir
+if [ "$tb" ]; then
+    echo $tb >.tb_dir
 fi
 
 # ------------------------- Prompt for GPUS visible in container ------------------------
 read -p "GPUs [all]: " gpus_prompt
 gpus_prompt=${gpus_prompt:-all}
 gpus=\"'device=str'\"
-gpus=$(sed "s/str/$gpus_prompt/g" <<< $gpus)
+gpus=$(sed "s/str/$gpus_prompt/g" <<<$gpus)
 
 # ---------------------------- Prompt for host Jupyter port -----------------------------
-read -p "Jupyter forwarded port [XXXX] -> container's 8888: " jupyter_port
-jupyter_port=${jupyter_port:-8888}
+if [ -e .jupyter_port ]; then
+    jupyter_port_dump=$(cat .jupyter_port)
+else
+    jupyter_port_dump="8888"
+fi
+read -p "Jupyter forwarded port [$jupyter_port_dump] -> container's 8888: " jupyter_port
+jupyter_port=${jupyter_port:-$jupyter_port_dump}
+if [ "$jupyter_port" ]; then
+    echo $jupyter_port >.jupyter_port
+fi
 
 # -------------------------- Prompt for host TensorBoard port ---------------------------
-read -p "TensorBoard forwarded port [XXXX] -> container's 6006: " tb_port
-tb_port=${tb_port:-6006}
-
-# ------------------------------ Prompt for host SSH port -------------------------------
-read -p "SSH forwarded port [XXXX] -> container's 22: " ssh_port
-ssh_port=${ssh_port:-22}
+if [ -e .tb_port ]; then
+    tb_port_dump=$(cat .tb_port)
+else
+    tb_port_dump="6006"
+fi
+read -p "TensorBoard forwarded port [$tb_port_dump] -> container's 6006: " tb_port
+tb_port=${tb_port:-$tb_port_dump}
+if [ "$tb_port" ]; then
+    echo $tb_port >.tb_port
+fi
 
 # -------------------------------- Start the container ----------------------------------
 
-while [ true ]
-do
-
+while [ true ]; do
     read -p "Restart container on reboot? [Y/n]: " rc
     rc=${rc:-"Y"}
-    if [ $rc == "Y" ]
-    then
+    if [ $rc == "Y" ]; then
         docker run \
-            --restart unless-stopped \
+            --restart always \
             --gpus $gpus \
             -d \
             -v $HOME/.ssh:/root/.ssh \
@@ -83,16 +90,13 @@ do
             --shm-size 32G \
             -p 127.0.0.1:$jupyter_port:8888 \
             -p 127.0.0.1:$tb_port:6006 \
-            -p 127.0.0.1:$ssh_port:22 \
             -e TB_DIR=$tb \
             --name $container_name \
             $@ \
             $docker_image_name
-        docker exec --user=root $container_name service ssh start
         break
 
-    elif [ $rc == "n" ]
-    then
+    elif [ $rc == "n" ]; then
         docker run \
             --rm \
             --gpus $gpus \
@@ -103,33 +107,28 @@ do
             --shm-size 32G \
             -p 127.0.0.1:$jupyter_port:8888 \
             -p 127.0.0.1:$tb_port:6006 \
-            -p 127.0.0.1:$ssh_port:22 \
             -e TB_DIR=$tb \
             --name $container_name \
             $@ \
             $docker_image_name
-        docker exec --user=root $container_name service ssh start
         break
     else
         echo "Provide Y or n"
     fi
 done
 
-
-echo ------------------------ CONTAINER IS SUCCESSFULLY STARTED ------------------------
-echo - Jupyter Lab is available at: localhost:$jupyter_port/lab  
-echo - Jupyter Notebook is available at: localhost:$jupyter_port/tree
+echo ""
+echo -------------------- CONTAINER HAS BEEN SUCCESSFULLY STARTED ---------------------
+echo - Jupyter Lab is available at: localhost:$jupyter_port/lab, serving at ./notebooks
+echo - TensorBoard is available at: localhost:$tb_port, monitoring experiments in $tb
 echo
-echo - Connect to container via SSH: ssh -p $ssh_port root@localhost
 echo - Inspect the container: docker exec -it $container_name bash
 echo - Update the image: docker commit --change='CMD ~/init.sh' updated_container_name_or_hash $docker_image_name
 echo
 echo - Stop the container: docker stop $container_name
 echo
-if [ "$ws" ]
-then
+if [ "$ws" ]; then
     echo - Inside the container $ws will be available at /ws
-    echo - Tensorboard is available at: localhost:$tb_port, monitoring experiments in $tb.
 fi
 echo -----------------------------------------------------------------------------------
 
@@ -137,10 +136,10 @@ echo ---------------------------------------------------------------------------
 # --rm: remove container after stop
 # --gpus all: allows access of docker container to your GPU
 # -d: runs container in detached mode
-# -v ${PWD}:/code: attaches current repository folder to /code in container. 
+# -v ${PWD}:/code: attaches current repository folder to /code in container.
 #                  All changes in the /code folder are changes in the repo folder.
 # -v $1:/ws: attaches dir, which is specified in the first arg of docker_run.sh call
 #            as /ws folder. All changes in the /ws folder are changes in the attached folder.
-# -p 8888:8888: maps host port 8888 to 8888 port in teh container. The former is host port, 
+# -p 8888:8888: maps host port 8888 to 8888 port in teh container. The former is host port,
 #               the latter is the container port (8888 is default port for jupyter)
 # --name container_name: give a name to the created container

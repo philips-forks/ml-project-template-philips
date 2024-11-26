@@ -34,42 +34,28 @@ RUN wget -O /usr/local/share/ca-certificates/ciscoumbrella.crt \
 
 # -------------------------- Install essential Linux packages ---------------------------
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     unzip \
     screen \
     tmux \
     net-tools \
-    iputils-ping
-
-
-# ----------------------------- Install dependencies ------------------------------
-
-# # xargs are used to make possible use pip install flags in requirements.txt 
-# # see https://pip.pypa.io/en/stable/cli/pip_install
-# COPY requirements.txt /root/requirements.txt
-# RUN pip config --global set http.sslVerify false \
-#     && sed '/^#/d' /root/requirements.txt | xargs -L 1 pip install --no-cache-dir
-
+    iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
 
 # ------------------- Configure Jupyter and Tensorboard individually --------------------
 RUN echo "#!/bin/sh" > ~/init.sh
 
-ARG JUPYTERPWD=passwd
-ARG INSTALL_JUPYTER=false
-ARG INSTALL_TENSORBOARD=false
-
 COPY .jupyter_password set_jupyter_password.py /root/.jupyter/
 
-RUN if [ "$INSTALL_JUPYTER" = "true" ]; then \
-    pip install -U jupyterlab ipywidgets \
+RUN pip install -U jupyterlab ipywidgets \
     && python /root/.jupyter/set_jupyter_password.py /root \
-    && echo "/usr/local/bin/jupyter lab --allow-root --no-browser &" >> ~/init.sh; \
-    fi
+    && echo "/usr/local/bin/jupyter lab --allow-root --no-browser --notebook-dir=/code/notebooks &" >> ~/init.sh
 
-RUN if [ "$INSTALL_TENSORBOARD" = "true" ]; then \
-    pip install -U tensorboard \
-    && echo "/usr/local/bin/tensorboard --logdir=\$TB_DIR --bind_all" >> ~/init.sh; \
-    fi
+RUN pip install -U tensorboard \
+    && echo "/usr/local/bin/tensorboard --logdir=\$TB_DIR --bind_all" >> ~/init.sh \
+    && echo "true" >> /root/.tensorboard_installed
+
+RUN echo "sleep infinity" >> ~/init.sh
 
 RUN chmod +x ~/init.sh
 
@@ -77,4 +63,4 @@ RUN chmod +x ~/init.sh
 ENV TB_DIR=/ws/experiments
 WORKDIR /code
 
-CMD ~/init.sh
+CMD ["sh", "-c", "~/init.sh"]
