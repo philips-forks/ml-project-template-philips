@@ -27,22 +27,35 @@ read -r -p "Absolute path to the project workspace folder with data and experime
 ws=${ws:-$ws_dump}
 if [ "$ws" ]; then
     echo $ws >.ws_dir
-    mkdir -p $ws/experiments
+    mkdir -p $ws/tensorboard_logs
 fi
 
-# ---------------------------- Prompt for tensorboard folder ----------------------------
-if [ -e .ws_dir ]; then
-    tb_dump=$(cat .tb_dir)
+# ----------------------------- Prompt for data directory ------------------------------
+if [ -e .data_dir ]; then
+    data_dir_dump=$(cat .data_dir)
 else
-    tb_dump=""
+    data_dir_dump=""
 fi
 
-tb=${tb_dump:="/ws/experiments"}
-read -r -p "Relative path to the tensorboard logdir [$tb]: " tb
-tb=${tb:-$tb_dump}
-if [ "$tb" ]; then
-    echo $tb >.tb_dir
+read -r -p "Absolute path to the read-only data directory [$data_dir_dump]: " data_dir
+data_dir=${data_dir:-$data_dir_dump}
+if [ "$data_dir" ]; then
+    echo $data_dir >.data_dir
 fi
+
+# # ---------------------------- Prompt for tensorboard folder ----------------------------
+# if [ -e .ws_dir ]; then
+#     tb_dump=$(cat .tb_dir)
+# else
+#     tb_dump=""
+# fi
+
+# tb=${tb_dump:="/ws/experiments"}
+# read -r -p "Relative path to the tensorboard logdir [$tb]: " tb
+# tb=${tb:-$tb_dump}
+# if [ "$tb" ]; then
+#     echo $tb >.tb_dir
+# fi
 
 # ------------------------- Prompt for GPUS visible in container ------------------------
 read -p "GPUs [all]: " gpus_prompt
@@ -87,12 +100,12 @@ while [ true ]; do
             -v $HOME/.ssh:/root/.ssh \
             -v ${PWD}:/code \
             -v $ws:/ws \
-            --shm-size 32G \
+            -v $data_dir:/data:ro \
             -p 127.0.0.1:$jupyter_port:8888 \
             -p 127.0.0.1:$tb_port:6006 \
-            -e TB_DIR=$tb \
             --name $container_name \
-            $@ \
+            --shm-size 32G \
+            --ulimit stack=67108864 \
             $docker_image_name
         break
 
@@ -104,12 +117,12 @@ while [ true ]; do
             -v $HOME/.ssh:$HOME/.ssh \
             -v ${PWD}:/code \
             -v $ws:/ws \
-            --shm-size 32G \
+            -v $data_dir:/data:ro \
             -p 127.0.0.1:$jupyter_port:8888 \
             -p 127.0.0.1:$tb_port:6006 \
-            -e TB_DIR=$tb \
             --name $container_name \
-            $@ \
+            --shm-size 32G \
+            --ulimit stack=67108864 \
             $docker_image_name
         break
     else
@@ -120,7 +133,7 @@ done
 echo ""
 echo -------------------- CONTAINER HAS BEEN SUCCESSFULLY STARTED ---------------------
 echo - Jupyter Lab is available at: localhost:$jupyter_port/lab, serving at ./notebooks
-echo - TensorBoard is available at: localhost:$tb_port, monitoring experiments in $tb
+echo - TensorBoard is available at: localhost:$tb_port, monitoring experiments in \<workspace_dir\>/tensorboard_logs
 echo
 echo - Inspect the container: docker exec -it $container_name bash
 echo - Update the image: docker commit --change='CMD ~/init.sh' updated_container_name_or_hash $docker_image_name

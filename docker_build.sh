@@ -3,7 +3,7 @@ set -e
 
 # Function to display help message
 show_help() {
-    echo "Usage: ./docker_build.sh <image_name[:tag]> [OPTIONS]"
+    echo "Usage: ./docker_build.sh <image_name:tag> [OPTIONS]"
     echo ""
     echo "Options:"
     echo "  --jupyter-pwd <jupyterpwd>       Set Jupyter password"
@@ -33,9 +33,9 @@ done
 echo "------------------------ Hi, let's set up your project! ------------------------"
 
 # ---------------------------- Prompts to define variables  -----------------------------
-curdir=${PWD##*/}
+curdir=${PWD##*/}:latest
 if [[ -z $docker_image_name ]]; then
-    read -r -p "Set up Docker image name[:tag] [$curdir]: " docker_image_name
+    read -r -p "Set up Docker image-name:tag [$curdir]: " docker_image_name
     docker_image_name=${docker_image_name:-$curdir}
 else
     echo Docker image name parsed from args: $docker_image_name
@@ -50,8 +50,6 @@ fi
 echo $jupyter_password >.jupyter_password
 
 echo $docker_image_name >.docker_image_name
-echo "" >.ws_dir
-echo "" >.tb_dir
 
 echo "------------------------------------ Building image -------------------------------------"
 docker build -t $docker_image_name \

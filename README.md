@@ -1,17 +1,33 @@
 # Machine learning project template
+
 This template was prepared to facilitate the routine of Docker image preparation for a typical deep learning project. Core idea of this template is usability. You need to do just a few steps, and you are ready for running your experiments!
 
 ## Requirements:
+
 **Linux:**
-* [Docker with GPU support on Linux](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-* Optionally: [Rootless Docker](https://docs.docker.com/engine/security/rootless/)
+
+-   [Docker with GPU support on Linux](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
+-   Optionally: [Rootless Docker](https://docs.docker.com/engine/security/rootless/)
 
 **Windows:**
-* [Docker with GPU support on Windows 10/11](./docs/WINDOWS_DOCKER_GPU.md)
+
+-   [Docker with GPU support on Windows 10/11](./docs/WINDOWS_DOCKER_GPU.md)
 
 ## Quick start
-1. **Clone this repo:** `git clone --recursive git@github.com:philips-internal/*.git`
-1. **Add proxy settings** into the `~/.docker/config.json`:
+
+> This repo is a template. Do not clone this repo! Instead, create a repo from this template and clone one. All the following instructions given for the inherited repo and not for this template.
+
+1. **Default base image** is `nvcr.io/nvidia/pytorch:XX.XX-py3`. if you would like to use tensorflow, change base image (`nvcr.io/nvidia/tensorflow:XX.XX-tf2-py3` recommended)
+1. Rename `./src/mlproject` dir to the name you would like to import with python: `import mlproject`
+1. **Python dependencies** are defined in `./pyproject.toml`. In the `project.scripts` section you can also define entrypoint scripts. Check out the file for an example.
+1. **You can add submodules** into `./libs` dir. Ones which are python package (can be installed with pip) will be installed into the image.
+
+```bash
+$ git submodule add https://example.com/submodule.git ./libs/submodule
+```
+
+6.  **A container will serve Jupyter and Tensorflow.** Put your project-related notebooks into `./notebooks`.
+1.  **Add proxy settings into the `~/.docker/config.json` if needed:**
 
         {
             "proxies": {
@@ -22,43 +38,62 @@ This template was prepared to facilitate the routine of Docker image preparation
                 }
             }
         }
-1. **Define dependencies** in the `environment.yaml` and `requirements.txt`
-1. **Add planned packages**  into the `./src` dir. After the build you can import this module in python. You can add as many modules in `./src` as you want **before the build**. Do not forget, that each module should include `__init__.py` to be taken into account.
-1. **Add pip-installable packages** into the `./libs`. They will be installed during the build with `pip install -e <lib>` and can be imported in python directly.
-1. **Build image:** `bash docker_build.sh`.
-    * To avoid an interactive session you can provide the following arguments in the command: 
-    
-        ```bash
-        bash docker_build.sh \
-            --docker_image_name ml-project-template:tagged \
-            --jupyter_password JUPYTER_PASSWORD \
-            --ssh_password SSH_PASSWORD
-        ```
-7. **Start a container:** `bash docker_start_interactive.sh`
-    * You will be asked to define IMAGE_NAME, CONTAINER_NAME, WORKSPACE_DIR, JUPYTER_PORT, TENSORBOARD_PORT, SSH_PORT. 
-    * The ports you are asked to set up are the **host** ports, advice available ports to your system admin if you work on remote server, or specify free ports if you work on local machine. 
-    * Workspace dir is a directory on the host machine, provide a full path. 
-    * If you want to define additional docker run parameters, just provide them after the command. For example: `bash docker_start_interactive.sh -p 9898:9898`
 
-8. After image has been started: 
-    - Jupyter Lab is available at: `http://localhost:<JUPYTER_PORT>/lab  `
-    - Jupyter Notebook is available at: `http://localhost:<JUPYTER_PORT>/tree`
-    - Tensorboard is available at: `http://localhost:<TENSORBOARD_PORT>`, monitoring experiments in $tb.
-    - Connect to container via SSH: `ssh -p <SSH_PORT> root@localhost` (if you are under proxy, no connection to outer world => no package installation possible)
-    - Inspect the container: `docker exec -it <CONTAINER_NAME> bash` (if you are under proxy, install packages inside in this mode)
-    - Stop the container: `docker stop <CONTAINER_HASH>`
-    - Inside the container WORKSPACE_DIR will be available at /ws
+1.  **Build the image and follwo the instructions on prompt. Building can take up to 20m:**
 
-9. **Connect an IDE** to the running container:
-    * VSCode: [Docker with GPU support on Windows 10/11](./docs/VSCODE.md)
-    * PyCharm: TBD
+```bash
+$ ./docker_build.sh
+# You can also use non-interactive way:
+$ ./docker_build.sh my-project:v1.0 --jupyter-pwd <jupyter_password>
+```
 
-10. **Update the image**
-     * You can access container by the command: `docker exec -it <CONTAINER_NAME> bash`  
-     * Then install as many pip packages as you want (do not forget to add them into `requirements.txt`)  
-     * At the end you can update the image with the command: `docker commit --change=CMD ~/init.sh <CONTAINER_NAME> <IMAGE_NAME>`
+9. **Start a conatiner and follow the instructions on prompt:**
 
-11. **Share the image**
-     * Share the repo and then either build the image on new machine, or compress and decompress the image on a new machine :
-     * `docker save <IMAGE_NAME>:latest > my-image.tar`
-     * `docker load < my-image.tar`
+```bash
+$ ./docker_start.sh
+```
+
+10. **Step by step will be asked to provide:**
+- IMAGE_NAME:TAG — image to start *(impl. for cases when you might want to start previously built image)*
+- CONTAINER_NAME — custom name for the container.
+- WORKSPACE_DIR — directory on the host machine where you want to store pre-processed data, training logs, model weights, etc. Inside container will be available in `/ws`.  **Provide an absolute path.**
+- DATA_DIR is a directory on the host machine where you keep read-only raw data. Inside container will be available in `/data`. **Provide an absolute path.**
+- JUPYTER_PORT and TENSORBOARD_PORT — the **host** ports to bind, check the busy ports with `netstat -tulp | grep LISTEN`.
+
+11. After image has been started:
+
+```
+-   Current repo folder is available at /code
+-   <WORKSPACE_DIR> is available at /ws
+-   <DATA_DIR> is available at /data
+
+-   Jupyter Lab is available at: http://localhost:<JUPYTER_PORT>/lab
+-   Tensorboard is available at: http://localhost:<TENSORBOARD_PORT>, monitoring experiments in <WORKSPACE_DIR>/experiments by default.
+
+-   To inspect the container: docker exec -it <CONTAINER_NAME> bash
+-   To stop the container: docker stop <CONTAINER_HASH>
+```
+
+12. **Connect an IDE** to the running container:
+
+-   VSCode: [Docker with GPU support on Windows 10/11](./docs/VSCODE.md)
+-   PyCharm: TBD
+
+13. **Update the image**
+
+-   You can access container by the command: `docker exec -it <CONTAINER_NAME> bash`
+-   Then install as many pip packages as you want (do not forget to add them into `pyproject.toml`)
+-   At the end you can update the image with the command: `docker commit --change=CMD ~/init.sh <CONTAINER_NAME> <IMAGE_NAME:v2.0>`
+
+14. **Options to share the image**:
+- Push to a docker registry:
+```bash 
+$ docker login <REGISTRY_URL>
+$ docker tag <IMAGE_NAME:TAG> <REGISTRY_URL>/<IMAGE_NAME:TAG>
+$ docker push <REGISTRY_URL>/<IMAGE_NAME:TAG>
+```
+- Share the repo and then either build the image on new machine, or compress and decompress the image on a new machine:
+```bash 
+$ docker save image_name:tag | gzip > output_file.tar.gz
+$ docker load < output_file.tar.gz
+```
