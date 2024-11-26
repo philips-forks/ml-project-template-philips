@@ -1,18 +1,18 @@
 # VSCode Remote devevelpment in Docker containers
 
-## Attaching to Docker run locally
+## Attaching to a container that is running on a local machine
 
 1. Install [Docker extension](https://code.visualstudio.com/docs/containers/overview).
 1. Open Docker Extension tab and find your container or press Shift+P and type `> Dev Containers: Attach to Running Container...
 1. Open `/code` folder.
 1. Voilà!
 
-## Attaching to Docker run remotely
+## Attaching to a container that is running on a remote server
 
 1. Install [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extension pack
 1. Connect to machine where the docker container is running with SSH:
     - Check >< icon in the bottom left corner of the app or press Shift+P and type `> Remote-SSH: Connect to Host...`
-    - Select the host with the running container (to avoid typing password on every login, google for *ssh host alias* and *ssh pubkey authentication* )
+    - Select the host with the running container (to avoid typing password on every login, google for _ssh host alias_ and _ssh pubkey authentication_ )
 1. Install [Docker extension](https://code.visualstudio.com/docs/containers/overview) on remote VScode instance (got to Extensions and type Docker)
 1. Open Docker Extension tab and find your container or press Shift+P and type `> Dev Containers: Attach to Running Container...
 1. Open `/code` folder.
