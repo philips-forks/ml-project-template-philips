@@ -94,7 +94,7 @@ while [ true ]; do
     rc=${rc:-"Y"}
     if [ $rc == "Y" ]; then
         docker run \
-            --restart always \
+            --restart unless-stopped \
             --gpus $gpus \
             -d \
             -v $HOME/.ssh:/root/.ssh \
@@ -136,9 +136,9 @@ echo - Jupyter Lab is available at: localhost:$jupyter_port/lab, serving at ./no
 echo - TensorBoard is available at: localhost:$tb_port, monitoring experiments in \<workspace_dir\>/tensorboard_logs
 echo
 echo - Inspect the container: docker exec -it $container_name bash
-echo - Update the image: docker commit --change='CMD ~/init.sh' updated_container_name_or_hash $docker_image_name
-echo
 echo - Stop the container: docker stop $container_name
+echo
+echo - Update the image: docker commit --change='CMD ~/init.sh' updated_container_name_or_hash $docker_image_name
 echo
 if [ "$ws" ]; then
     echo - Inside the container $ws will be available at /ws

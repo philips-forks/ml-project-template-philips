@@ -76,7 +76,7 @@ $ ./docker_start.sh
 
 12. **Connect an IDE** to the running container:
 
--   VSCode: [Docker with GPU support on Windows 10/11](./docs/VSCODE.md)
+-   VSCode: [instructions](./docs/VSCODE.md)
 -   PyCharm: TBD
 
 13. **Update the image**

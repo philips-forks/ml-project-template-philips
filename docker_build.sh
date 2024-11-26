@@ -73,5 +73,5 @@ docker stop $tmp_container_name
 docker commit --change='CMD ~/init.sh' $tmp_container_name $docker_image_name
 docker rm $tmp_container_name &>/dev/null
 
-echo "------------------------ Build successfully finished! --------------------------------------"
-echo "------------------- Start a container: bash docker_start_interactive.sh --------------------"
+echo "------------------- Build successfully finished! ----------------------------------------"
+echo "------------------- Start a container: bash docker_start.sh -----------------------------"
