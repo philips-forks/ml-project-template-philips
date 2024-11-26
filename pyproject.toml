@@ -1,3 +1,67 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlproject"
+version = "0.1.0"
+description = "A template for a machine learning project"
+authors = [{ name = "Your Name", email = "your.name@example.com" }]
+license = { file = "LICENSE" }
+readme = "README.md"
+dependencies = [
+    "albumentations",
+    "black",
+    "flake8",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "opencv-python",
+    "pillow",
+    "pydicom",
+    "scipy",
+    "seaborn",
+    "scikit-image",
+    "scikit-learn",
+    "statsmodels",
+    "tqdm @ git+https://github.com/tqdm/tqdm.git",
+]
+
+[project.scripts]
+ml-project-training = "mlproject.package0.hello:main"
+
+[tool.setuptools.packages]
+find = { where = ["src"] }
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.pylint]
+ignore = ["libs", "sandbox"]
+persistent = true
+
+[tool.pylint.typecheck]
+ignored-modules = ["cv2"] # Modules to ignore for type checking
+
+[tool.pylint.messages-control]
+# List of disabled warnings/messages
+disable = [
+    "C0116",
+    "C0209",
+    "C0301",
+    "C0115",
+    "C0302",
+    "C0114",
+    "C0103",
+    "W1202",
+    "W1203",
+    "W0201",
+    "W0108",
+    "W0621",
+    "W0718",
+    "C2801",
+    "C0301",
+    "W0603",
+    "E0611",
+    "R0902",
+]
