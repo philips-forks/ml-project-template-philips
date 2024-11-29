@@ -7,8 +7,12 @@ show_help() {
     echo ""
     echo "Options:"
     echo "  --jupyter-pwd <jupyterpwd>       Set Jupyter password"
+    echo "  --deploy                         Copy code into the Docker image for standalone deployment"
     echo "  -h, --help                       Show this help message"
 }
+
+# Initialize variables
+DEPLOY=false
 
 # Argument parsing
 while [ $# -gt 0 ]; do
@@ -16,6 +20,10 @@ while [ $# -gt 0 ]; do
     --jupyter-pwd)
         jupyter_password="$2"
         shift 2
+        ;;
+    --deploy)
+        DEPLOY=true
+        shift
         ;;
     -h | --help)
         show_help
@@ -59,7 +67,19 @@ docker build -t $docker_image_name \
 # ----- Install user packages from ./src to the container and submodules from ./libs ----
 echo "---------------------- Installing user packages and submodules --------------------------"
 tmp_container_name=tmp_${docker_image_name%%:*}_$RANDOM
-docker run -dt -v ${PWD}:/code --name $tmp_container_name --entrypoint="" $docker_image_name bash
+
+if [ ${DEPLOY} = true ]; then
+    echo "---------------------- Deploying code into the image --------------------------"
+    # Run the container without mounting the code
+    docker run -dt --name $tmp_container_name --entrypoint="" $docker_image_name bash
+    # Copy code into the container
+    docker cp . $tmp_container_name:/code
+else
+    # Mount the code directory
+    docker run -dt -v ${PWD}:/code --name $tmp_container_name --entrypoint="" $docker_image_name bash
+fi
+
+# Install packages
 for lib in $(ls ./libs); do
     if test -f ./libs/$lib/setup.py; then
         echo "Installing $lib"
@@ -69,6 +89,7 @@ for lib in $(ls ./libs); do
     fi
 done
 docker exec $tmp_container_name pip install --no-cache-dir --root-user-action=ignore -e /code/.
+
 docker stop $tmp_container_name
 docker commit --change='CMD ~/init.sh' $tmp_container_name $docker_image_name
 docker rm $tmp_container_name &>/dev/null
