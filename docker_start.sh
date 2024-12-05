@@ -200,7 +200,7 @@ elif [ "$rc" == "n" ]; then
     docker_run_options+=(--rm)
 fi
 
-docker_run_options+=(--gpus "$gpus")
+docker_run_options+=(--gpus \"$gpus\")
 docker_run_options+=(-d)
 docker_run_options+=(-v "$HOME/.ssh:/root/.ssh")
 if [ "$SSH_AUTH_SOCK" ]; then
