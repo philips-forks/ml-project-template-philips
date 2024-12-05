@@ -203,6 +203,10 @@ fi
 docker_run_options+=(--gpus "$gpus")
 docker_run_options+=(-d)
 docker_run_options+=(-v "$HOME/.ssh:/root/.ssh")
+if [ "$SSH_AUTH_SOCK" ]; then
+    docker_run_options+=(-v "$SSH_AUTH_SOCK:/ssh-agent")
+    docker_run_options+=(-e "SSH_AUTH_SOCK=/ssh-agent")
+fi
 docker_run_options+=(-v "${PWD}:/code")
 if [ "$ws" ]; then
     docker_run_options+=(-v "$ws:/ws")
