@@ -3,12 +3,17 @@ set -e
 
 # Function to display help message
 show_help() {
-    echo "Usage: ./docker_build.sh <image_name:tag> [OPTIONS]"
+    echo -e "\033[1mUsage:\033[0m ./docker_build.sh <image_name:tag> [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  --jupyter-pwd <jupyterpwd>       Set Jupyter password"
+    echo "  --jupyter-pwd <jupyterpwd>       Set Jupyter password (required if not cached)"
     echo "  --deploy                         Copy code into the Docker image for standalone deployment"
     echo "  -h, --help                       Show this help message"
+    echo ""
+    echo -e "\033[1mExamples:\033[0m"
+    echo "  ./docker_build.sh my-image:latest --jupyter-pwd mypassword"
+    echo "  ./docker_build.sh my-image:latest --deploy --jupyter-pwd mypassword"
+    echo "  ./docker_build.sh --help"
 }
 
 # Initialize variables
@@ -38,7 +43,13 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-echo "------------------------ Hi, let's set up your project! ------------------------"
+# Validate required arguments early if running non-interactively
+if ! [ -t 0 ] && [ -z "$docker_image_name" ]; then
+    echo -e "\033[31mError: <image_name:tag> is required in non-interactive mode.\033[0m" >&2
+    exit 1
+fi
+
+echo -e "\033[1;32m------------------------ Hi, let's set up your project! ------------------------\033[0m"
 
 # ---------------------------- Prompts to define variables  -----------------------------
 curdir=${PWD##*/}:latest
@@ -53,11 +64,12 @@ if [[ -z $jupyter_password ]]; then
     read -s -p "Set up Jupyter password: " jupyter_password
     echo ""
 else
-    echo Jupyter password parsed from args. Saved into '.jupyter_password'
+    echo Jupyter password parsed from args. Saved into '.env' file.
 fi
-echo $jupyter_password >.jupyter_password
 
-echo $docker_image_name >.docker_image_name
+touch .env && chmod 600 .env
+echo "docker_image_name=$docker_image_name" >.env
+echo "jupyter_password=$jupyter_password" >>.env
 
 echo "------------------------------------ Building image -------------------------------------"
 docker build -t $docker_image_name \
@@ -94,5 +106,6 @@ docker stop $tmp_container_name
 docker commit --change='CMD ~/init.sh' $tmp_container_name $docker_image_name
 docker rm $tmp_container_name &>/dev/null
 
-echo "------------------- Build successfully finished! ----------------------------------------"
-echo "------------------- Start a container: bash docker_start.sh -----------------------------"
+# Add color to build success output
+echo -e "\033[1;32m------------------- Build successfully finished! ----------------------------------------\033[0m"
+echo -e "\033[1;32m------------------- Start a container: bash docker_start.sh -----------------------------\033[0m"

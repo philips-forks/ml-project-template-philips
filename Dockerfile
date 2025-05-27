@@ -15,7 +15,7 @@ RUN apt-get update \
 # ------------------- Configure Jupyter and Tensorboard individually --------------------
 RUN echo "#!/bin/sh" > ~/init.sh
 
-COPY .jupyter_password set_jupyter_password.py /root/.jupyter/
+COPY .env set_jupyter_password.py /root/.jupyter/
 
 RUN pip install -U jupyterlab ipywidgets \
     && python /root/.jupyter/set_jupyter_password.py /root \

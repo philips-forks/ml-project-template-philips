@@ -7,6 +7,7 @@
 .jupyter_port
 .tb_port
 .data_dir
+.hint
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
