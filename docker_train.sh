@@ -24,6 +24,7 @@ show_help() {
     echo "  -w, --workspace <path>           Absolute path to the workspace folder (will be cached)"
     echo "  -d, --data-dir <path>            Absolute path to the read-only data directory (will be cached)"
     echo "  -g, --gpus <gpus>                GPUs visible in container [all]"
+    echo "  -e, --experiment <name>          Experiment name (default: auto-generated timestamp)"
     echo "      --restart <Y|n>              Restart container on reboot [Y]"
     echo "      --docker-args <args>         Additional arguments to pass to docker run"
     echo "      --non-interactive            Run without prompts (use provided values or defaults)"
@@ -43,6 +44,9 @@ show_help() {
     echo "  # Using only GPUs 0 and 1"
     echo "  $0 my-image:latest --gpus '0,1'"
     echo ""
+    echo "  # With experiment name"
+    echo "  $0 my-image:latest --experiment \"feature_engineering_v2\""
+    echo ""
     echo "  # With additional Docker arguments"
     echo "  $0 my-image:latest --docker-args '--privileged --network=host'"
     echo ""
@@ -59,6 +63,7 @@ gpus_prompt=""
 rc=""
 docker_extra_args=""
 detached_mode=false
+experiment_name=""
 
 # Detect non-interactive mode
 non_interactive=false
@@ -111,6 +116,9 @@ while [[ $# -gt 0 ]]; do
         shift; shift ;;
         -g | --gpus)
             gpus_prompt="$2"
+        shift; shift ;;
+        -e | --experiment)
+            experiment_name="$2"
         shift; shift ;;
         --restart)
             rc="$2"
@@ -172,13 +180,32 @@ while ! docker image inspect "$docker_image_name" >/dev/null 2>&1; do
 done
 echo -e "${GREEN}✓ Using image: $docker_image_name${NC}"
 
+# Generate experiment name and setup experiment directory
+if [ -z "$experiment_name" ]; then
+    # Generate timestamp-based experiment name: YYMMDD_HHMM
+    timestamp=$(date +"%y%m%d_%H%M")
+    if [ "$non_interactive" = false ]; then
+        read -p "Experiment name [$timestamp-experiment]: " experiment_name_input
+        experiment_name=${experiment_name_input:-"$timestamp-experiment"}
+    else
+        experiment_name="$timestamp-experiment"
+    fi
+else
+    # Add timestamp prefix if not already present
+    if [[ ! "$experiment_name" =~ ^[0-9]{6}_[0-9]{4}- ]]; then
+        timestamp=$(date +"%y%m%d_%H%M")
+        experiment_name="$timestamp-$experiment_name"
+    fi
+fi
+echo -e "${GREEN}✓ Using experiment name: $experiment_name${NC}"
+
 # Get container name
 if [ -z "$container_name" ]; then
     container_name=$(get_env_var container_name)
     if [ -z "$container_name" ]; then
-        container_name="$(echo $docker_image_name | tr : .).train"
+        container_name="$(echo $docker_image_name | tr : .).train.$experiment_name"
     else
-        container_name="$(echo $container_name | tr : .).train"
+        container_name="$(echo $container_name | tr : .).train.$experiment_name"
     fi
     if [ "$non_interactive" = false ]; then
         read -r -p "Container name [$container_name]: " container_name_input
@@ -241,6 +268,33 @@ while [ ! -d "$ws" ]; do
 done
 
 echo -e "${GREEN}✓ Using workspace directory: $ws${NC}"
+
+# Setup experiment directory structure
+experiment_dir="$ws/experiments/$experiment_name"
+echo -e "${BLUE}Setting up experiment directory: $experiment_dir${NC}"
+mkdir -p "$experiment_dir"/{checkpoints,plots,tb_logs,code_snapshot}
+
+# Create experiment metadata files
+echo -e "${BLUE}Creating experiment metadata files...${NC}"
+
+# System info for reproducibility
+cat > "$experiment_dir/system_info.txt" << EOF
+Experiment: $experiment_name
+Date: $(date)
+Host: $(hostname)
+OS: $(uname -a)
+Docker Image: $docker_image_name
+Git Commit: $(git rev-parse HEAD 2>/dev/null || echo "Not a git repository")
+EOF
+
+# Add GPU info if available
+if command -v nvidia-smi &>/dev/null; then
+    echo "" >> "$experiment_dir/system_info.txt"
+    echo "=== GPU Information ===" >> "$experiment_dir/system_info.txt"
+    nvidia-smi >> "$experiment_dir/system_info.txt"
+fi
+
+echo -e "${GREEN}✓ Experiment directory structure created${NC}"
 
 # Get data directory
 if [ -z "$data_dir" ]; then
@@ -350,18 +404,61 @@ else
     echo -e "${BLUE}Running training in interactive mode...${NC}"
 fi
 
+# Freeze code and create experiment-specific container
+echo -e "${BLUE}Freezing code for experiment reproducibility...${NC}"
+
+# Create a temporary container to freeze the current code state
+temp_container_name="temp_freeze_${experiment_name}_$(date +%s)"
+echo -e "${BLUE}Creating temporary container to freeze code: $temp_container_name${NC}"
+
+# Start temporary container
+docker run -d --name "$temp_container_name" --entrypoint="" "$docker_image_name" sleep infinity
+
+# Copy current code to the container (freeze the code state)
+tar --exclude='./ws' --exclude='./data' -czf - . | docker exec -i "$temp_container_name" tar -xzf - -C /code/
+
+# Also create a code snapshot in the experiment directory for reference (only src code)
+echo -e "${BLUE}Creating code snapshot in experiment directory...${NC}"
+# Only copy the src directory - that's what matters for reproducibility
+if [ -d "${PWD}/src" ]; then
+    rsync -av --exclude='*.egg-info' "${PWD}/src/" "$experiment_dir/code_snapshot/src/"
+    echo -e "${GREEN}✓ Code snapshot saved to $experiment_dir/code_snapshot/src${NC}"
+else
+    echo -e "${YELLOW}⚠ No src directory found, skipping code snapshot${NC}"
+fi
+
+# Generate requirements.txt from the current environment
+echo -e "${BLUE}Generating frozen requirements.txt...${NC}"
+docker exec "$temp_container_name" pip freeze > "$experiment_dir/requirements.txt"
+echo -e "${GREEN}✓ Requirements frozen to $experiment_dir/requirements.txt${NC}"
+
+# Commit the container with frozen code as a new experiment image
+frozen_image_name="${docker_image_name%%:*}:exp-$experiment_name"
+echo -e "${BLUE}Creating frozen experiment image: $frozen_image_name${NC}"
+docker commit --change='WORKDIR /code' "$temp_container_name" "$frozen_image_name"
+
+# Clean up temporary container
+docker stop "$temp_container_name" >/dev/null 2>&1 || true
+docker rm "$temp_container_name" >/dev/null 2>&1 || true
+
+echo -e "${GREEN}✓ Code frozen in image: $frozen_image_name${NC}"
+
+# Set up container mounts (no code mount since it's frozen in the image)
 docker_run_options+=(-v "$HOME/.ssh:/root/.ssh")
 if [ "$SSH_AUTH_SOCK" ]; then
     docker_run_options+=(-v "$SSH_AUTH_SOCK:/ssh-agent")
     docker_run_options+=(-e "SSH_AUTH_SOCK=/ssh-agent")
 fi
-docker_run_options+=(-v "${PWD}:/code")
+# Note: No code mount here - code is frozen in the image
 if [ "$ws" ]; then
     docker_run_options+=(-v "$ws:/ws")
 fi
 if [ "$data_dir" ]; then
     docker_run_options+=(-v "$data_dir:/data:ro")
 fi
+# Pass experiment environment variables
+docker_run_options+=(-e "EXPERIMENT_NAME=$experiment_name")
+docker_run_options+=(-e "EXPERIMENT_DIR=/ws/experiments/$experiment_name")
 docker_run_options+=(--name "$container_name")
 docker_run_options+=(--shm-size 32G)
 docker_run_options+=(--ulimit stack=67108864)
@@ -379,8 +476,8 @@ if ! [ -t 0 ] && [ -z "$docker_image_name" ]; then
 fi
 
 # Run the Docker container with the training command
-echo -e "${BLUE}Starting training container '$container_name' from image '$docker_image_name'...${NC}"
-docker run "${docker_run_options[@]}" "$docker_image_name" python src/mlproject/main.py
+echo -e "${BLUE}Starting training container '$container_name' from frozen image '$frozen_image_name'...${NC}"
+docker run "${docker_run_options[@]}" "$frozen_image_name" python src/mlproject/main.py
 
 if [ "$detached_mode" = true ]; then
     echo ""
@@ -390,8 +487,12 @@ if [ "$detached_mode" = true ]; then
     echo ""
     echo -e "${BLUE}Container Details:${NC}"
     echo -e "• ${YELLOW}Container name:${NC} $container_name"
-    echo -e "• ${YELLOW}Image:${NC} $docker_image_name"
+    echo -e "• ${YELLOW}Experiment:${NC} $experiment_name"
+    echo -e "• ${YELLOW}Experiment dir:${NC} $experiment_dir"
+    echo -e "• ${YELLOW}Base image:${NC} $docker_image_name"
+    echo -e "• ${YELLOW}Frozen image:${NC} $frozen_image_name"
     echo -e "• ${YELLOW}Training command:${NC} python src/mlproject/main.py"
+    echo -e "• ${YELLOW}Code:${NC} frozen in container (reproducible)"
     echo -e "• ${YELLOW}Workspace:${NC} $ws → /ws"
     echo -e "• ${YELLOW}Data:${NC} $data_dir → /data (read-only)"
     echo -e "• ${YELLOW}Attached GPUs:${NC} $gpus"
@@ -410,11 +511,24 @@ if [ "$detached_mode" = true ]; then
     
     Container Details:
     • Container name: $container_name
-    • Image: $docker_image_name
+    • Experiment: $experiment_name
+    • Base image: $docker_image_name
+    • Frozen image: $frozen_image_name
     • Training command: python src/mlproject/main.py
+    • Code: frozen in container (reproducible)
     • Workspace: $ws → /ws
     • Data: $data_dir → /data (read-only)
     • Attached GPUs: $gpus
+    
+    Experiment Artifacts:
+    • Experiment directory: $experiment_dir
+    • Training logs: $experiment_dir/training.log
+    • Checkpoints: $experiment_dir/checkpoints/
+    • Plots: $experiment_dir/plots/
+    • TensorBoard logs: $experiment_dir/tb_logs/
+    • System info: $experiment_dir/system_info.txt
+    • Frozen requirements: $experiment_dir/requirements.txt
+    • Config: $experiment_dir/config.json
     
     Next steps:
     • Monitor training logs: docker logs -f $container_name
@@ -422,10 +536,10 @@ if [ "$detached_mode" = true ]; then
     • Stop training: docker stop $container_name
     • Remove container: docker rm $container_name
     
-    Training artifacts will be saved to: $ws"
+    Training artifacts will be saved to: $experiment_dir"
     
     echo "$hint_content" > .train_hint
 else
     echo ""
-    echo -e "${GREEN}Training completed. Check the workspace directory (${GREEN}$ws${NC}) for training artifacts.${NC}"
+    echo -e "${GREEN}Training completed. Check the experiment directory (${YELLOW}$experiment_dir${NC})${GREEN} for training artifacts.${NC}"
 fi
