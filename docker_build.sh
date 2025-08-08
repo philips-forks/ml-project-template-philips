@@ -6,13 +6,12 @@ show_help() {
     echo -e "\033[1mUsage:\033[0m ./docker_build.sh <image_name:tag> [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  --jupyter-pwd <jupyterpwd>       Set Jupyter password (required if not cached)"
     echo "  --deploy                         Copy code into the Docker image for standalone deployment"
     echo "  -h, --help                       Show this help message"
     echo ""
     echo -e "\033[1mExamples:\033[0m"
-    echo "  ./docker_build.sh my-image:latest --jupyter-pwd mypassword"
-    echo "  ./docker_build.sh my-image:latest --deploy --jupyter-pwd mypassword"
+    echo "  ./docker_build.sh my-image:latest"
+    echo "  ./docker_build.sh my-image:latest --deploy"
     echo "  ./docker_build.sh --help"
 }
 
@@ -22,10 +21,6 @@ DEPLOY=false
 # Argument parsing
 while [ $# -gt 0 ]; do
     case "$1" in
-    --jupyter-pwd)
-        jupyter_password="$2"
-        shift 2
-        ;;
     --deploy)
         DEPLOY=true
         shift
@@ -60,24 +55,31 @@ else
     echo Docker image name parsed from args: $docker_image_name
 fi
 
-if [[ -z $jupyter_password ]]; then
-    read -s -p "Set up Jupyter password: " jupyter_password
-    echo ""
-else
-    echo Jupyter password parsed from args. Saved into '.env' file.
-fi
-
+# Update or create .env file
 touch .env && chmod 600 .env
-echo "docker_image_name=$docker_image_name" >.env
-echo "jupyter_password=$jupyter_password" >>.env
+
+# Function to update or add a key-value pair in .env
+update_env_var() {
+    local key="$1"
+    local value="$2"
+    # Escape special characters in the value for sed
+    local escaped_value=$(printf '%s\n' "$value" | sed 's/[[\.*^$()+?{|]/\\&/g')
+    if grep -q "^${key}=" .env 2>/dev/null; then
+        # Key exists, update it using | as delimiter to avoid conflicts with special chars
+        sed -i "s|^${key}=.*|${key}=${escaped_value}|" .env
+    else
+        # Key doesn't exist, add it
+        echo "${key}=${value}" >> .env
+    fi
+}
+
+update_env_var "docker_image_name" "$docker_image_name"
 
 echo "------------------------------------ Building image -------------------------------------"
-docker build -t $docker_image_name \
-    --build-arg JUPYTERPWD=$jupyter_password \
-    .
+docker build -t $docker_image_name .
 
 # ----- Install user packages from ./src to the container and submodules from ./libs ----
-echo "---------------------- Installing user packages and submodules --------------------------"
+echo -e "\033[1;34m---------------------- Installing user packages and submodules --------------------------\033[0m"
 tmp_container_name=tmp_${docker_image_name%%:*}_$RANDOM
 
 if [ ${DEPLOY} = true ]; then
@@ -93,6 +95,10 @@ fi
 
 # Install packages
 for lib in $(ls ./libs); do
+    if test -f ./libs/$lib/requirements.txt; then
+        echo "Installing $lib requirements.txt"
+        docker exec $tmp_container_name pip install --no-cache-dir --root-user-action=ignore -r /code/libs/$lib/requirements.txt
+    fi
     if test -f ./libs/$lib/setup.py; then
         echo "Installing $lib"
         docker exec $tmp_container_name pip install --no-cache-dir --root-user-action=ignore -e /code/libs/$lib/.
@@ -103,9 +109,10 @@ done
 docker exec $tmp_container_name pip install --no-cache-dir --root-user-action=ignore -e /code/.
 
 docker stop $tmp_container_name
-docker commit --change='CMD ~/init.sh' $tmp_container_name $docker_image_name
-docker rm $tmp_container_name &>/dev/null
+docker commit --change='CMD ~/start.sh' $tmp_container_name $docker_image_name
+docker rm -f $tmp_container_name &>/dev/null
 
 # Add color to build success output
 echo -e "\033[1;32m------------------- Build successfully finished! ----------------------------------------\033[0m"
-echo -e "\033[1;32m------------------- Start a container: bash docker_start.sh -----------------------------\033[0m"
+echo -e "\033[1;32m------------------- Start dev container: bash docker_dev.sh ---------------------------\033[0m"
+echo -e "\033[1;32m------------------- Start training contaner: bash docker_train.sh ------------------------------\033[0m"

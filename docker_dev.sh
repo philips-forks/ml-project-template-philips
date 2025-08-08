@@ -6,22 +6,20 @@ show_help() {
     echo -e "\033[1mUsage:\033[0m $0 <image_name> [OPTIONS]"
     echo ""
     echo -e "\033[1mPositional arguments:\033[0m"
-    echo "  image_name                              Docker image name (if omitted, read from .docker_image_name)"
+    echo "  image_name                              Docker image name (if omitted, read from .env)"
     echo ""
     echo -e "\033[1mOptions:\033[0m"
     echo "  -c, --container-name <name>             Container name (default: <image_name> with colons replaced by underscores)"
     echo "  -w, --workspace <path>                  Absolute path to the workspace folder (will be cached)"
     echo "  -d, --data-dir <path>                   Absolute path to the read-only data directory (will be cached)"
     echo "  -g, --gpus <gpus>                       GPUs visible in container [all]"
-    echo "      --jupyter-port <port>               Host port mapped to container's 8888 (Jupyter) [8888]"
-    echo "      --tb-port <port>                    Host port mapped to container's 6006 (TensorBoard) [6006]"
     echo "      --restart <Y|n>                     Restart container on reboot [Y]"
     echo "      --docker-args <args>                Additional arguments to pass to docker run"
     echo "  --non-interactive                       Run in non-interactive mode (use default values and do not prompt)"
     echo "  -h, --help                              Show this help message"
     echo ""
     echo -e "\033[1mExamples:\033[0m"
-    echo "  $0 my-image:latest -c mycontainer -w /home/user/ws -d /home/user/data --gpus all --jupyter-port 8888 --tb-port 6006 --restart Y"
+    echo "  $0 my-image:latest -c mycontainer -w /home/user/ws -d /home/user/data --gpus all --restart Y"
     echo "  $0 my-image:latest --non-interactive"
     echo "  $0 --help"
 }
@@ -32,8 +30,6 @@ container_name=""
 ws=""
 data_dir=""
 gpus_prompt=""
-jupyter_port=""
-tb_port=""
 rc=""
 docker_extra_args=""
 
@@ -78,12 +74,6 @@ while [[ $# -gt 0 ]]; do
         shift; shift ;;
     -g | --gpus)
         gpus_prompt="$2"
-        shift; shift ;;
-    --jupyter-port)
-        jupyter_port="$2"
-        shift; shift ;;
-    --tb-port)
-        tb_port="$2"
         shift; shift ;;
     --restart)
         rc="$2"
@@ -176,11 +166,15 @@ while [ ! -d "$ws" ]; do
         echo -e "\033[31mWorkspace directory '$ws' does not exist.\033[0m"
         exit 1
     fi
-    echo -e "\033[31mWorkspace directory '$ws' does not exist.\033[0m"
-    read -r -p "Please provide an existing workspace directory: " ws
+    echo -e "\033[31mWorkspace directory '$ws' does not exist. Attempting to create it...\033[0m"
+    mkdir -p "$ws"
+    if [ $? -ne 0 ]; then
+        echo -e "\033[31mFailed to create workspace directory '$ws'.\033[0m"
+        # Prompt for a valid workspace directory
+        read -r -p "Please provide an existing workspace directory: " ws
+    fi
 done
 
-mkdir -p "$ws/tensorboard_logs"
 echo -e "\033[36mUsing workspace directory: $ws\033[0m"
 
 # ----------------------------- Prompt for data directory ------------------------------
@@ -201,8 +195,13 @@ while [ ! -d "$data_dir" ]; do
         echo -e "\033[31mDirectory '$data_dir' does not exist.\033[0m"
         exit 1
     fi
-    echo -e "\033[31mDirectory '$data_dir' does not exist.\033[0m"
-    read -r -p "Please provide an existing data directory: " data_dir
+    echo -e "\033[31mDirectory '$data_dir' does not exist. Attempting to create it...\033[0m"
+    mkdir -p "$data_dir"
+    if [ $? -ne 0 ]; then
+        echo -e "\033[31mFailed to create directory '$data_dir'.\033[0m"
+        # Prompt for a valid data directory
+        read -r -p "Please provide an existing data directory: " data_dir
+    fi
 done
 
 echo -e "\033[36mUsing data directory: $data_dir\033[0m"
@@ -227,48 +226,6 @@ if command -v nvidia-smi &>/dev/null; then
     nvidia-smi --query-gpu=index,name,memory.total,memory.used,memory.free --format=csv,noheader,nounits \
         | awk -F, '{printf "GPU %s (%s): Used %s MiB / %s MiB (Free: %s MiB)\n", $1, $2, $4, $3, $5}'
 fi
-
-# ---------------------------- Prompt for host Jupyter port -----------------------------
-if [ -z "$jupyter_port" ]; then
-    jupyter_port=$(get_env_var jupyter_port)
-    jupyter_port=${jupyter_port:-8888}
-    if [ "$non_interactive" = false ]; then
-        read -p "Jupyter forwarded port [$jupyter_port] -> container's 8888: " jupyter_port_input
-        jupyter_port=${jupyter_port_input:-$jupyter_port}
-    fi
-fi
-
-# Check if the selected Jupyter port is busy, prompt until a free port is chosen
-while ss -tuln | grep -q ":$jupyter_port "; do
-    if [ "$non_interactive" = true ]; then
-        echo -e "\033[31mPort $jupyter_port is already in use.\033[0m"
-        exit 1
-    fi
-    echo -e "\033[31mPort $jupyter_port is already in use.\033[0m"
-    read -p "Please provide a different Jupyter port: " jupyter_port
-done
-echo -e "\033[36mUsing Jupyter port: $jupyter_port\033[0m"
-
-# -------------------------- Prompt for host TensorBoard port ---------------------------
-if [ -z "$tb_port" ]; then
-    tb_port=$(get_env_var tb_port)
-    tb_port=${tb_port:-6006}
-    if [ "$non_interactive" = false ]; then
-        read -p "TensorBoard forwarded port [$tb_port] -> container's 6006: " tb_port_input
-        tb_port=${tb_port_input:-$tb_port}
-    fi
-fi
-
-# Check if the selected port is busy, prompt until a free port is chosen
-while ss -tuln | grep -q ":$tb_port "; do
-    if [ "$non_interactive" = true ]; then
-        echo -e "\033[31mPort $tb_port is already in use.\033[0m"
-        exit 1
-    fi
-    echo -e "\033[31mPort $tb_port is already in use.\033[0m"
-    read -p "Please provide a different TensorBoard port: " tb_port
-done
-echo -e "\033[36mUsing TensorBoard port: $tb_port\033[0m"
 
 # ----------------------- Prompt for restart policy (on reboot) -------------------------
 if [ -z "$rc" ]; then
@@ -298,14 +255,31 @@ if [ ! -z "$docker_extra_args" ]; then
 fi
 
 # -------------------------- Save configuration to .env file ----------------------------
-echo "docker_image_name=$docker_image_name" >.env
-echo "container_name=$container_name" >>.env
-echo "workspace_dir=$ws" >>.env
-echo "data_dir=$data_dir" >>.env
-echo "gpus=$gpus" >>.env
-echo "jupyter_port=$jupyter_port" >>.env
-echo "tb_port=$tb_port" >>.env
-echo "restart_container=$rc" >>.env
+# Function to update or add a key-value pair in .env
+update_env_var() {
+    local key="$1"
+    local value="$2"
+    # Escape special characters in the value for sed
+    local escaped_value=$(printf '%s\n' "$value" | sed 's/[[\.*^$()+?{|]/\\&/g')
+    if grep -q "^${key}=" .env 2>/dev/null; then
+        # Key exists, update it using | as delimiter to avoid conflicts with special chars
+        sed -i "s|^${key}=.*|${key}=${escaped_value}|" .env
+    else
+        # Key doesn't exist, add it
+        echo "${key}=${value}" >> .env
+    fi
+}
+
+# Ensure .env exists
+touch .env && chmod 600 .env
+
+# Update each configuration value
+update_env_var "docker_image_name" "$docker_image_name"
+update_env_var "container_name" "$container_name"
+update_env_var "workspace_dir" "$ws"
+update_env_var "data_dir" "$data_dir"
+update_env_var "gpus" "$gpus"
+update_env_var "restart_container" "$rc"
 
 # -------------------------------- Start the container ----------------------------------
 docker_run_options=()
@@ -330,8 +304,6 @@ fi
 if [ "$data_dir" ]; then
     docker_run_options+=(-v "$data_dir:/data:ro")
 fi
-docker_run_options+=(-p "127.0.0.1:$jupyter_port:8888")
-docker_run_options+=(-p "127.0.0.1:$tb_port:6006")
 docker_run_options+=(--name "$container_name")
 docker_run_options+=(--shm-size 32G)
 docker_run_options+=(--ulimit stack=67108864)
@@ -356,14 +328,12 @@ NC='\033[0m'
 # Add color to success output
 success_msg="${GREEN}-------------------- CONTAINER HAS BEEN SUCCESSFULLY STARTED ---------------------${NC}
 \033[1mContainer name:\033[0m $container_name
-\033[1mJupyter Lab is available at:\033[0m localhost:$jupyter_port/lab, serving at ./notebooks
-\033[1mTensorBoard is available at:\033[0m localhost:$tb_port, monitoring experiments in <workspace_dir>/tensorboard_logs
 
 \033[1mAttach shell to the container:\033[0m docker exec -it $container_name bash
 \033[1mStop the container:\033[0m docker stop $container_name
 \033[1mDelete the container:\033[0m docker rm $container_name
 
-\033[1mUpdate the image:\033[0m docker commit --change='CMD ~/init.sh' CONTAINER_ID $docker_image_name
+\033[1mUpdate the image:\033[0m docker commit CONTAINER_ID $docker_image_name
 \n"
 if [ "$ws" ]; then
     success_msg+="Inside the container $ws will be available at /ws\n"

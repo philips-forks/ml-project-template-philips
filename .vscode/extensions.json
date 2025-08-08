@@ -1,0 +1,23 @@
+{
+    "recommendations": [
+        "ahmadalli.vscode-nginx-conf",
+        "bierner.github-markdown-preview",
+        "bierner.github-markdown-preview",
+        "charliermarsh.ruff",
+        "eamodio.gitlens",
+        "esbenp.prettier-vscode",
+        "foxundermoon.shell-format",
+        "GitHub.vscode-pull-request-github",
+        "iterative.dvc",
+        "mhutchie.git-graph",
+        "ms-python.gather",
+        "ms-python.pylint",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers",
+        "ms-toolsai.jupyter",
+        "njpwerner.autodocstring",
+        "tamasfe.even-better-toml"
+    ]
+}

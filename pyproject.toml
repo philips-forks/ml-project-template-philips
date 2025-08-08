@@ -10,13 +10,11 @@ authors = [{ name = "Your Name", email = "your.name@example.com" }]
 license = { file = "LICENSE" }
 readme = "README.md"
 dependencies = [
-    "albumentations",
-    "black",
-    "flake8",
+    # "albumentations",
     "matplotlib",
     "numpy",
     "pandas",
-    "opencv-python",
+    # "opencv-python-headless",
     "pillow",
     "pydicom",
     "scipy",
@@ -28,7 +26,7 @@ dependencies = [
 ]
 
 [project.scripts]
-ml-project-training = "mlproject.package0.hello:main"
+ml-project-training = "mlproject.main:main"
 
 [tool.setuptools.packages]
 find = { where = ["src"] }
@@ -47,6 +45,7 @@ ignored-modules = ["cv2"] # Modules to ignore for type checking
 # List of disabled warnings/messages
 disable = [
     "C0116",
+    "C0200",
     "C0209",
     "C0301",
     "C0115",
@@ -64,4 +63,129 @@ disable = [
     "W0603",
     "E0611",
     "R0902",
+    "W0123",
+    "W0212",
+    "W0221",
 ]
+
+[tool.black]
+line-length = 120
+target-version = ["py310", "py311", "py312", "py313"]
+extend-exclude = '''
+/(
+    src/aixrayfeatures/dl/_deprecated   # Ignore deprecated files
+  | src/aixrayfeatures/dl/_future        # Ignore legacy code
+)
+'''
+
+[tool.isort]
+profile = "black"
+extend_skip_glob = [
+    "src/aixrayfeatures/dl/_deprecated/*",
+    "src/aixrayfeatures/dl/_future/*",
+]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".github",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "site-packages",
+    "venv",
+    "_future",
+    "_deprecated",
+]
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+# Allow fix for all enabled rules (when `--fix`) is provided.
+select = [
+    "E",
+    "F",
+    "Q",
+    "I",
+    "W",
+    "S",
+    "B",
+    "A",
+    "G",
+    "PL",
+    "RUF",
+    "C4",
+    "CPY",
+    "NPY",
+    "ASYNC",
+    "BLE",
+    "ICN",
+    "PIE",
+    "PYI",
+    "RET",
+    "SIM",
+    "ARG",
+    "PERF",
+    "FAST",
+]
+ignore = [
+    "BLE001",  # Do not catch blind exception: `Exception`
+    "SIM113",  # Use `enumerate()`
+    "C408",    # Unnecessary dict call
+    "C409",    # Unnecessary list call
+    "C410",    # Unnecessary set call
+    "C411",    # Unnecessary tuple call
+    "SIM108",  # ternary ops
+    "PLR0916", # Too many Boolean expressions
+    "N802",    # function name should be lowercase
+    "N803",    # Argument name should be lowercase
+    "PERF401", # Use `list.extend` to create a transformed list
+    "ARG002",  # Unused method argument: `input`
+    "PLR6301", # could be a function, class method, or static method
+    "CPY001",  # missing copyright information
+    "I001",    # unsorted-imports: Import block is un-sorted or un-formatted
+    "N806",    # non-lowercase-variable-in-function: to avoid warnings on e.g. single letter math variables
+    "N813",    # camelcase-imported-as-lowercase: Camelcase {name} imported as lowercase {asname}
+    "E741",    # ambiguous-variable-name: Ambiguous short variable names such as l, I or O
+    "PLR0904", # too-many-public-methods: Class with too many public methods
+    "PLR0912", # too-many-branches: Function or method with too many branches
+    "PLR0913", # too-many-arguments: Function or method definition with too many arguments
+    "PLR0914", # too-many-locals: Function or method with too many local variables
+    "PLR0915", # too-many-statements: Function or method with too many statements
+    "PLR0917", # too-many-positional: Function or method with too many positional arguments
+    "PLR1702", # too-many-block: too many nested blocks
+    "PLR2004", # magic-value-comparison: Unnamed numerical constants ("magic") values in comparisons
+    "S311",    # suspicious-non-cryptographic-random-usage: allow use of e.g. random.choice as number is not used for security matters
+    "NPY002",  # numpy-legacy-random: authorize use of legacy np.random functions
+]
+fixable = ["ALL"]
+preview = false
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+docstring-code-format = false

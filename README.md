@@ -1,6 +1,35 @@
-# Machine learning project template
+# ML Project Template
 
 This template was prepared to facilitate the routine of Docker image preparation for a typical deep learning project. Core idea of this template is usability. You need to do just a few steps, and you are ready for running your experiments!
+
+## 🚀 Quick Initialization
+
+**New to this template?** Run the initialization script first:
+
+```bash
+./init.sh
+```
+
+This interactive script will prompt you for:
+
+-   **Project name** (must be a valid Python package name)
+-   **Description** and **author information**
+-   **Docker configuration** (image name, container name, ports)
+-   **Directory paths** (workspace, data directories)
+    v
+    Example session:
+
+```
+Project name (Python package name) [ml-project-template]: my_awesome_project
+Project description [A machine learning project]: Computer vision model for device detection
+Author name [Your Name]: John Doe
+Author email [your.name@example.com]: john.doe@company.com
+Docker image name [my-awesome-project:latest]:
+Default container name [my-awesome-project_container]:
+...
+```
+
+Skip to [Complete Workflow](#complete-workflow) after initialization.
 
 ## Requirements:
 
@@ -17,83 +46,204 @@ This template was prepared to facilitate the routine of Docker image preparation
 
 > This repo is a template. Do not clone this repo! Instead, create a repo from this template and clone one. All the following instructions given for the inherited repo and not for this template.
 
-1. **Default base image** is `nvcr.io/nvidia/pytorch:XX.XX-py3`. if you would like to use tensorflow, change base image (`nvcr.io/nvidia/tensorflow:XX.XX-tf2-py3` recommended)
-1. Rename `./src/mlproject` dir to the name you would like to import with python: `import mlproject`
-1. **Python dependencies** are defined in `./pyproject.toml`. In the `project.scripts` section you can also define entrypoint scripts. Check out the file for an example.
-1. **You can add submodules** into `./libs` dir. Ones which are python package (can be installed with pip) will be installed into the image.
+### Initial Project Setup
+
+1. **Initialize your project** (recommended for new projects):
+
+```bash
+$ ./init.sh
+```
+
+This interactive script will:
+
+-   Prompt for your project name and rename the source directory accordingly
+-   Update `pyproject.toml` with your project details (name, description, author)
+-   Configure default Docker image/container names in `.env`
+-   Set up workspace and data directory paths
+-   Update all references to use your project name
+
+2. **Manual setup** (if you prefer to configure manually):
+    - **Default base image** is `nvcr.io/nvidia/pytorch:XX.XX-py3`. if you would like to use tensorflow, change base image (`nvcr.io/nvidia/tensorflow:XX.XX-tf2-py3` recommended)
+    - Rename `./src/mlproject` dir to the name you would like to import with python: `import your_project_name`
+    - **Python dependencies** are defined in `./pyproject.toml`. In the `project.scripts` section you can also define entrypoint scripts. Check out the file for an example.
+3. **You can add submodules** into `./libs` dir. Ones which are python package (can be installed with pip) will be installed into the image.
 
 ```bash
 $ git submodule add https://example.com/submodule.git ./libs/submodule
 ```
 
-6.  **A container will serve Jupyter and Tensorflow.** Put your project-related notebooks into `./notebooks`.
-1.  **Add proxy settings into the `~/.docker/config.json` if needed:**
+4.  **The container provides a Python environment for ML development.** Put your project-related scripts into `./src/mlproject`.
+5.  **Add proxy settings into the `~/.docker/config.json` if needed:**
 
         {
             "proxies": {
                 "default": {
-                    "httpProxy": "http://address.proxy.com:8888/",
-                    "httpsProxy": "http://address.proxy.com:8888/",
+                    "httpProxy": "http://address.proxy.com:8080/",
+                    "httpsProxy": "http://address.proxy.com:8080/",
                     "noProxy": "localhost,127.0.0.1"
                 }
             }
         }
 
-1.  **Build the image and follwo the instructions on prompt. Building can take up to 20m:**
+6.  **Build the image and follow the instructions on prompt. Building can take up to 20m:**
 
 ```bash
 $ ./docker_build.sh
 # You can also use non-interactive way:
-$ ./docker_build.sh my-project:v1.0 --jupyter-pwd <jupyter_password>
+$ ./docker_build.sh my-project:v1.0
 ```
 
-9. **Start a conatiner and follow the instructions on prompt:**
+7. **Start a development container for interactive work:**
 
 ```bash
-$ ./docker_start.sh
+$ ./docker_dev.sh
+# You can also use non-interactive way:
+$ ./docker_dev.sh my-project:v1.0 --non-interactive
 ```
 
-10. **Step by step will be asked to provide:**
-- IMAGE_NAME:TAG — image to start *(impl. for cases when you might want to start previously built image)*
-- CONTAINER_NAME — custom name for the container.
-- WORKSPACE_DIR — directory on the host machine where you want to store pre-processed data, training logs, model weights, etc. Inside container will be available in `/ws`.  **Provide an absolute path.**
-- DATA_DIR is a directory on the host machine where you keep read-only raw data. Inside container will be available in `/data`. **Provide an absolute path.**
-- JUPYTER_PORT and TENSORBOARD_PORT — the **host** ports to bind, check the busy ports with `netstat -tulp | grep LISTEN`.
+8. **Or start training directly:**
 
-11. After image has been started:
+```bash
+$ ./docker_train.sh
+# For detached training (runs in background):
+$ ./docker_train.sh my-project:v1.0 --detached
+# Non-interactive mode:
+$ ./docker_train.sh my-project:v1.0 --non-interactive
+```
+
+9. **Development vs Training Workflows:**
+
+**Development Container (`docker_dev.sh`):**
+
+-   Provides an interactive container environment for development
+-   Ideal for debugging, code development, and interactive testing
+-   Access the container via VS Code `ms-vscode-remote.vscode-remote-extensionpack` extension and run your code interactively
+
+**Training Container (`docker_train.sh`):**
+
+-   Runs the training script directly (`src/mlproject/main.py`)
+-   Can run in interactive mode (default) or detached mode (`--detached`)
+-   Training logs saved to `/ws/training.log`
+
+10. **Container Details:**
 
 ```
 -   Current repo folder is available at /code
 -   <WORKSPACE_DIR> is available at /ws
--   <DATA_DIR> is available at /data
+-   <DATA_DIR> is available at /data (read-only)
 
--   Jupyter Lab is available at: http://localhost:<JUPYTER_PORT>/lab
--   Tensorboard is available at: http://localhost:<TENSORBOARD_PORT>, monitoring experiments in <WORKSPACE_DIR>/experiments by default.
+-   Training artifacts (checkpoints, logs) are saved to /ws
 
 -   To inspect the container: docker exec -it <CONTAINER_NAME> bash
--   To stop the container: docker stop <CONTAINER_HASH>
+-   To monitor training logs: docker logs -f <CONTAINER_NAME>
+-   To stop the container: docker stop <CONTAINER_NAME>
 ```
 
-12. **Connect an IDE** to the running container:
+11. **Monitoring Training:**
 
--   VSCode: [instructions](./docs/VSCODE.md)
--   PyCharm: TBD
+```bash
+# Monitor real-time training logs
+$ docker logs -f <training_container_name>
+
+# Access training log file
+$ tail -f ./ws/training.log
+```
+
+12. **Connect VS Code** to the running development container: [instructions](./docs/VSCODE.md)
 
 13. **Update the image**
 
--   You can access container by the command: `docker exec -it <CONTAINER_NAME> bash`
--   Then install as many pip packages as you want (do not forget to add them into `pyproject.toml`)
--   At the end you can update the image with the command: `docker commit --change=CMD ~/init.sh <CONTAINER_NAME> <IMAGE_NAME:v2.0>`
+After making changes to your development container (installing packages, etc.), you can update your Docker image to preserve those changes:
+
+**Using the update script (recommended):**
+
+```bash
+# Interactive mode - prompts for container and image details
+./docker_update.sh
+
+# Non-interactive mode - uses defaults from .env
+./docker_update.sh --non-interactive
+
+# Specify container and image explicitly
+./docker_update.sh --container my_container --image my-project:v2.0
+
+# With commit message and author
+./docker_update.sh -c my_container -i my-project:v2.0 \
+  -m "Added new dependencies" --author "Your Name <email@example.com>"
+```
+
+**Manual approach:**
+
+-   `docker commit --change='CMD ~/start.sh' <CONTAINER_NAME> <IMAGE_NAME:v2.0>`
+
+The `docker_update.sh` script provides a safer, more user-friendly way to update images with validation, helpful prompts, and better error handling.
 
 14. **Options to share the image**:
-- Push to a docker registry:
-```bash 
+
+**For standalone deployment (includes code in image):**
+
+```bash
+# Build image with code embedded for deployment
+$ ./docker_build.sh my-project:v1.0 --deploy
+```
+
+The `--deploy` flag copies your source code directly into the Docker image, creating a standalone image that doesn't require mounting the code directory.
+
+**For development sharing (code mounted at runtime):**
+
+-   Push to a docker registry:
+
+```bash
 $ docker login <REGISTRY_URL>
 $ docker tag <IMAGE_NAME:TAG> <REGISTRY_URL>/<IMAGE_NAME:TAG>
 $ docker push <REGISTRY_URL>/<IMAGE_NAME:TAG>
 ```
-- Share the repo and then either build the image on new machine, or compress and decompress the image on a new machine:
-```bash 
+
+-   Share the repo and then either build the image on new machine, or compress and decompress the image on a new machine:
+
+```bash
 $ docker save image_name:tag | gzip > output_file.tar.gz
 $ docker load < output_file.tar.gz
 ```
+
+## Complete Workflow
+
+The typical development and training workflow follows these steps:
+
+> **Note**: If you haven't run `./init.sh` yet, do that first to set up your project properly.
+
+### 1. Initial Setup
+
+```bash
+# Build the Docker image with your environment
+./docker_build.sh my-project:v1.0
+```
+
+### 2. Development Phase
+
+```bash
+# Start development container with interactive shell
+./docker_dev.sh my-project:v1.0
+
+# Access the container and develop/test your code interactively
+# Run your scripts, debug, and iterate on your code
+```
+
+### 3. Training Phase
+
+```bash
+# When ready to train, start training container
+./docker_train.sh my-project:v1.0
+
+# Or run in background (detached mode)
+./docker_train.sh my-project:v1.0 --detached
+
+# Monitor training progress
+docker logs -f <training_container_name>
+```
+
+### 4. Artifacts and Results
+
+-   **Training logs**: `./ws/training.log`
+-   **Model checkpoints**: `./ws/checkpoints/`
+-   **Custom outputs**: `./ws/` (any subdirectory you create)

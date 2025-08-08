@@ -1,6 +1,5 @@
-FROM nvcr.io/nvidia/pytorch:24.11-py3
+FROM nvcr.io/nvidia/pytorch:25.06-py3
 ENV PYTHONUNBUFFERED=1
-
 
 # -------------------------- Install essential Linux packages ---------------------------
 RUN apt-get update \
@@ -12,26 +11,12 @@ RUN apt-get update \
     iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
-# ------------------- Configure Jupyter and Tensorboard individually --------------------
-RUN echo "#!/bin/sh" > ~/init.sh
-
-COPY .env set_jupyter_password.py /root/.jupyter/
-
-RUN pip install -U jupyterlab ipywidgets \
-    && python /root/.jupyter/set_jupyter_password.py /root \
-    && echo "/usr/local/bin/jupyter lab --allow-root --no-browser --notebook-dir=/code/notebooks &" >> ~/init.sh
-
-RUN pip install -U tensorboard \
-    && mkdir -p /ws/tensorboard_logs \
-    && echo "/usr/local/bin/tensorboard --logdir=/ws/tensorboard_logs --bind_all" >> ~/init.sh \
-    && echo "true" >> /root/.tensorboard_installed
-
-RUN echo "sleep infinity" >> ~/init.sh
-
-RUN chmod +x ~/init.sh
+RUN echo "#!/bin/sh" > ~/start.sh \
+    && echo "sleep infinity" >> ~/start.sh \
+    && chmod +x ~/start.sh
 
 # ------------------------------------ Miscellaneous ------------------------------------
 ENV TB_DIR=/ws/experiments
 WORKDIR /code
 
-CMD ["sh", "-c", "~/init.sh"]
+CMD ["sh", "-c", "~/start.sh"]

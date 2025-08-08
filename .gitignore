@@ -8,6 +8,7 @@
 .tb_port
 .data_dir
 .hint
+.initialized
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -141,4 +142,3 @@ dmypy.json
 
 # pycharm
 .idea/
-.vscode/
