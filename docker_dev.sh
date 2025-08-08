@@ -20,7 +20,7 @@ show_help() {
     echo "  image_name                       Docker image name (optional, will prompt if not provided or read from .env)"
     echo ""
     echo -e "\033[1mOptions:\033[0m"
-    echo "  -c, --container-name <name>      Container name (default: <image_name> with colons replaced by underscores)"
+    echo "  -c, --container-name <name>      Container name (default: <image_name>.dev)"
     echo "  -w, --workspace <path>           Absolute path to the workspace folder (will be cached)"
     echo "  -d, --data-dir <path>            Absolute path to the read-only data directory (will be cached)"
     echo "  -g, --gpus <gpus>                GPUs visible in container [all]"
@@ -91,30 +91,30 @@ fi
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
-    -c | --container-name)
-        container_name="$2"
+        -c | --container-name)
+            container_name="$2"
         shift; shift ;;
-    -w | --workspace)
-        ws="$2"
+        -w | --workspace)
+            ws="$2"
         shift; shift ;;
-    -d | --data-dir)
-        data_dir="$2"
+        -d | --data-dir)
+            data_dir="$2"
         shift; shift ;;
-    -g | --gpus)
-        gpus_prompt="$2"
+        -g | --gpus)
+            gpus_prompt="$2"
         shift; shift ;;
-    --restart)
-        rc="$2"
+        --restart)
+            rc="$2"
         shift; shift ;;
-    --docker-args)
-        docker_extra_args="$2"
+        --docker-args)
+            docker_extra_args="$2"
         shift; shift ;;
-    -h | --help)
-        show_help
+        -h | --help)
+            show_help
         exit 0 ;;
-    *)
-        echo -e "${RED}Unknown option: $1${NC}"
-        echo "Use --help for usage information."
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            echo "Use --help for usage information."
         exit 1 ;;
     esac
 done
@@ -165,10 +165,7 @@ echo -e "${GREEN}✓ Using image: $docker_image_name${NC}"
 
 # Get container name
 if [ -z "$container_name" ]; then
-    container_name=$(get_env_var container_name)
-    if [ -z "$container_name" ]; then
-        container_name=$(echo $docker_image_name | tr : _)
-    fi
+    container_name="$(echo $docker_image_name | tr : .).dev"
     if [ "$non_interactive" = false ]; then
         read -r -p "Container name [$container_name]: " container_name_input
         container_name=${container_name_input:-$container_name}
@@ -273,7 +270,7 @@ echo -e "${GREEN}✓ Using GPUs: $gpus_prompt${NC}"
 if command -v nvidia-smi &>/dev/null; then
     echo -e "${BLUE}Current GPU memory usage:${NC}"
     nvidia-smi --query-gpu=index,name,memory.total,memory.used,memory.free --format=csv,noheader,nounits \
-        | awk -F, '{printf "GPU %s (%s): Used %s MiB / %s MiB (Free: %s MiB)\n", $1, $2, $4, $3, $5}'
+    | awk -F, '{printf "GPU %s (%s): Used %s MiB / %s MiB (Free: %s MiB)\n", $1, $2, $4, $3, $5}'
 fi
 
 # Get restart policy
@@ -326,7 +323,6 @@ touch .env && chmod 600 .env
 
 # Update each configuration value
 update_env_var "docker_image_name" "$docker_image_name"
-update_env_var "container_name" "$container_name"
 update_env_var "workspace_dir" "$ws"
 update_env_var "data_dir" "$data_dir"
 update_env_var "gpus" "$gpus"
@@ -339,7 +335,7 @@ docker_run_options=()
 
 if [ "$rc" == "Y" ]; then
     docker_run_options+=(--restart unless-stopped)
-elif [ "$rc" == "n" ]; then
+    elif [ "$rc" == "n" ]; then
     docker_run_options+=(--rm)
 fi
 
@@ -384,6 +380,7 @@ echo ""
 echo -e "${BLUE}Container Details:${NC}"
 echo -e "• ${YELLOW}Container name:${NC} $container_name"
 echo -e "• ${YELLOW}Image:${NC} $docker_image_name"
+echo -e "• ${YELLOW}Code:${NC} ${PWD} → /code"
 echo -e "• ${YELLOW}Workspace:${NC} $ws → /ws"
 echo -e "• ${YELLOW}Data:${NC} $data_dir → /data (read-only)"
 echo -e "• ${YELLOW}Attached GPUs:${NC} $gpus"
@@ -402,6 +399,7 @@ hint_content="Development Container Successfully Started!
 Container Details:
 • Container name: $container_name
 • Image: $docker_image_name
+• Code: ${PWD} → /code
 • Workspace: $ws → /ws
 • Data: $data_dir → /data (read-only)
 • Attached GPUs: $gpus

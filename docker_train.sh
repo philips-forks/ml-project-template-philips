@@ -20,7 +20,7 @@ show_help() {
     echo "  image_name                       Docker image name (if omitted, read from .env)"
     echo ""
     echo -e "\033[1mOptions:\033[0m"
-    echo "  -c, --container-name <name>      Container name (default: <image_name>_train with colons replaced by underscores)"
+    echo "  -c, --container-name <name>      Container name (default: <image_name>.train)"
     echo "  -w, --workspace <path>           Absolute path to the workspace folder (will be cached)"
     echo "  -d, --data-dir <path>            Absolute path to the read-only data directory (will be cached)"
     echo "  -g, --gpus <gpus>                GPUs visible in container [all]"
@@ -31,7 +31,7 @@ show_help() {
     echo "  -h, --help                       Show this help message"
     echo ""
     echo -e "\033[1mExamples:\033[0m"
-echo "  # Interactive training (default, will prompt for image name if not in .env)"
+    echo "  # Interactive training (default, will prompt for image name if not in .env)"
     echo "  $0"
     echo ""
     echo "  # Background training"
@@ -100,30 +100,30 @@ fi
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
-    -c | --container-name)
-        container_name="$2"
+        -c | --container-name)
+            container_name="$2"
         shift; shift ;;
-    -w | --workspace)
-        ws="$2"
+        -w | --workspace)
+            ws="$2"
         shift; shift ;;
-    -d | --data-dir)
-        data_dir="$2"
+        -d | --data-dir)
+            data_dir="$2"
         shift; shift ;;
-    -g | --gpus)
-        gpus_prompt="$2"
+        -g | --gpus)
+            gpus_prompt="$2"
         shift; shift ;;
-    --restart)
-        rc="$2"
+        --restart)
+            rc="$2"
         shift; shift ;;
-    --docker-args)
-        docker_extra_args="$2"
+        --docker-args)
+            docker_extra_args="$2"
         shift; shift ;;
-    -h | --help)
-        show_help
+        -h | --help)
+            show_help
         exit 0 ;;
-    *)
-        echo -e "${RED}Unknown option: $1${NC}"
-        echo "Use --help for usage information."
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            echo "Use --help for usage information."
         exit 1 ;;
     esac
 done
@@ -176,9 +176,9 @@ echo -e "${GREEN}✓ Using image: $docker_image_name${NC}"
 if [ -z "$container_name" ]; then
     container_name=$(get_env_var container_name)
     if [ -z "$container_name" ]; then
-        container_name=$(echo $docker_image_name | tr : _)_train
+        container_name="$(echo $docker_image_name | tr : .).train"
     else
-        container_name="${container_name}_train"
+        container_name="$(echo $container_name | tr : .).train"
     fi
     if [ "$non_interactive" = false ]; then
         read -r -p "Container name [$container_name]: " container_name_input
@@ -298,7 +298,7 @@ echo -e "${GREEN}✓ Using GPUs: $gpus_prompt${NC}"
 if command -v nvidia-smi &>/dev/null; then
     echo -e "${BLUE}Current GPU memory usage:${NC}"
     nvidia-smi --query-gpu=index,name,memory.total,memory.used,memory.free --format=csv,noheader,nounits \
-        | awk -F, '{printf "GPU %s (%s): Used %s MiB / %s MiB (Free: %s MiB)\n", $1, $2, $4, $3, $5}'
+    | awk -F, '{printf "GPU %s (%s): Used %s MiB / %s MiB (Free: %s MiB)\n", $1, $2, $4, $3, $5}'
 fi
 
 # # ----------------------- Prompt for restart policy (on reboot) -------------------------
@@ -404,26 +404,26 @@ if [ "$detached_mode" = true ]; then
     echo ""
     echo -e "${BLUE}Training artifacts will be saved to: ${GREEN}$ws${NC}"
     echo -e "${BLUE}This information is saved in the .train_hint file.${NC}"
-
+    
     # Write plain version to .train_hint file
     hint_content="Training Container Successfully Started!
-
-Container Details:
-• Container name: $container_name
-• Image: $docker_image_name
-• Training command: python src/mlproject/main.py
-• Workspace: $ws → /ws
-• Data: $data_dir → /data (read-only)
-• Attached GPUs: $gpus
-
-Next steps:
-• Monitor training logs: docker logs -f $container_name
-• Attach to container: docker exec -it $container_name bash
-• Stop training: docker stop $container_name
-• Remove container: docker rm $container_name
-
-Training artifacts will be saved to: $ws"
-
+    
+    Container Details:
+    • Container name: $container_name
+    • Image: $docker_image_name
+    • Training command: python src/mlproject/main.py
+    • Workspace: $ws → /ws
+    • Data: $data_dir → /data (read-only)
+    • Attached GPUs: $gpus
+    
+    Next steps:
+    • Monitor training logs: docker logs -f $container_name
+    • Attach to container: docker exec -it $container_name bash
+    • Stop training: docker stop $container_name
+    • Remove container: docker rm $container_name
+    
+    Training artifacts will be saved to: $ws"
+    
     echo "$hint_content" > .train_hint
 else
     echo ""

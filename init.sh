@@ -23,7 +23,6 @@ show_help() {
     echo "  -a, --author <name>              Author name"
     echo "  -e, --email <email>              Author email"
     echo "  -i, --image <name:tag>           Docker image name"
-    echo "  -c, --container <name>           Default container name"
     echo "  -w, --workspace <path>           Workspace directory path"
     echo "      --data-dir <path>            Data directory path"
     echo "  -g, --gpus <config>              GPU configuration (e.g., 'device=all')"
@@ -52,7 +51,6 @@ project_description=""
 author_name=""
 author_email=""
 docker_image_name=""
-container_name=""
 workspace_dir=""
 data_dir=""
 gpus=""
@@ -66,60 +64,56 @@ while [[ $# -gt 0 ]]; do
         -n|--name)
             project_name="$2"
             shift 2
-            ;;
+        ;;
         -d|--description)
             project_description="$2"
             shift 2
-            ;;
+        ;;
         -a|--author)
             author_name="$2"
             shift 2
-            ;;
+        ;;
         -e|--email)
             author_email="$2"
             shift 2
-            ;;
+        ;;
         -i|--image)
             docker_image_name="$2"
             shift 2
-            ;;
-        -c|--container)
-            container_name="$2"
-            shift 2
-            ;;
+        ;;
         -w|--workspace)
             workspace_dir="$2"
             shift 2
-            ;;
+        ;;
         --data-dir)
             data_dir="$2"
             shift 2
-            ;;
+        ;;
         -g|--gpus)
             gpus="$2"
             shift 2
-            ;;
+        ;;
         --restart)
             restart_container="$2"
             shift 2
-            ;;
+        ;;
         --non-interactive)
             non_interactive=true
             shift
-            ;;
+        ;;
         --force)
             force_init=true
             shift
-            ;;
+        ;;
         -h|--help)
             show_help
             exit 0
-            ;;
+        ;;
         *)
             echo -e "${RED}Unknown option: $1${NC}"
             echo "Use --help for usage information."
             exit 1
-            ;;
+        ;;
     esac
 done
 
@@ -133,7 +127,7 @@ if [[ -f ".initialized" ]]; then
     echo -e "${YELLOW}This project appears to have been initialized already.${NC}"
     if [[ "$force_init" == true ]]; then
         echo -e "${YELLOW}Force flag detected. Re-initializing...${NC}"
-    elif [[ "$non_interactive" == true ]]; then
+        elif [[ "$non_interactive" == true ]]; then
         echo -e "${RED}Project already initialized. Use --force to re-initialize.${NC}"
         exit 1
     else
@@ -270,18 +264,6 @@ if [[ -z "$docker_image_name" ]]; then
     fi
 fi
 
-# Default container name
-if [[ -z "$container_name" ]]; then
-    default_container_name=$(to_docker_name "$project_name")_dev
-    if [[ "$non_interactive" == true ]]; then
-        container_name="$default_container_name"
-        echo -e "${BLUE}Using default container name: $container_name${NC}"
-    else
-        read -p "Default container name [$default_container_name]: " container_name
-        container_name=${container_name:-$default_container_name}
-    fi
-fi
-
 # Workspace directory
 if [[ -z "$workspace_dir" ]]; then
     if [[ -f ".env" ]]; then
@@ -361,7 +343,6 @@ echo -e "Project name: ${GREEN}$project_name${NC}"
 echo -e "Description: ${GREEN}$project_description${NC}"
 echo -e "Author: ${GREEN}$author_name <$author_email>${NC}"
 echo -e "Docker image: ${GREEN}$docker_image_name${NC}"
-echo -e "Container name: ${GREEN}$container_name${NC}"
 echo -e "Workspace dir: ${GREEN}$workspace_dir${NC}"
 echo -e "Data dir: ${GREEN}$data_dir${NC}"
 echo ""
@@ -438,10 +419,10 @@ logger = logging.getLogger(__name__)
 def main() -> None:
     """Main training function."""
     logger.info("Starting training...")
-    
+
     # TODO: Implement your training logic here
     logger.info("Training logic placeholder - implement your model training here")
-    
+
     logger.info("Training completed successfully!")
 
 
@@ -479,7 +460,6 @@ echo -e "${BLUE}Updating .env file...${NC}"
 
 cat > .env << EOF
 docker_image_name=$docker_image_name
-container_name=$container_name
 workspace_dir=$workspace_dir
 data_dir=$data_dir
 gpus=$gpus
