@@ -43,11 +43,11 @@ while [[ $# -gt 0 ]]; do
         --deploy)
             DEPLOY=true
             shift
-            ;;
+        ;;
         -h|--help)
             show_help
             exit 0
-            ;;
+        ;;
         *)
             if [[ -z $docker_image_name ]]; then
                 docker_image_name="$1"
@@ -57,7 +57,7 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             shift
-            ;;
+        ;;
     esac
 done
 
@@ -72,11 +72,28 @@ echo -e "${GREEN}                    Docker Image Build Tool                    
 echo -e "${GREEN}========================================================================${NC}"
 echo ""
 
-# Get current directory name as default
+# Helper function to read value from .env
+get_env_var() {
+    local var="$1"
+    if [ -f .env ]; then
+        grep -E "^${var}=" .env | head -n1 | cut -d'=' -f2-
+    fi
+}
+
+# Get current directory name as fallback default
 curdir=${PWD##*/}:latest
+
+# Get image name from .env, command line, or prompt
 if [[ -z $docker_image_name ]]; then
-    read -r -p "Docker image name:tag [$curdir]: " docker_image_name
-    docker_image_name=${docker_image_name:-$curdir}
+    docker_image_name=$(get_env_var docker_image_name)
+    if [[ -z $docker_image_name ]]; then
+        docker_image_name="$curdir"
+        echo -e "${YELLOW}No image name found in .env. Using directory-based default: $docker_image_name${NC}"
+    else
+        echo -e "${BLUE}Using image name from .env: $docker_image_name${NC}"
+    fi
+    read -r -p "Docker image name:tag [$docker_image_name]: " docker_image_name_input
+    docker_image_name=${docker_image_name_input:-$docker_image_name}
 else
     echo -e "${BLUE}Using Docker image name: $docker_image_name${NC}"
 fi
