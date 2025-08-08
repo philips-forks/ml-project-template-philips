@@ -1,27 +1,55 @@
 #!/bin/bash
 set -e
 
+# Colors for output
+GREEN='\033[1;32m'
+BLUE='\033[1;34m'
+YELLOW='\033[1;33m'
+RED='\033[1;31m'
+NC='\033[0m' # No Color
+
 # Function to display help message
 show_help() {
-    echo -e "\033[1mUsage:\033[0m $0 <image_name> [OPTIONS]"
+    echo -e "\033[1mUsage:\033[0m $0 [image_name] [OPTIONS]"
+    echo ""
+    echo -e "\033[1mDescription:\033[0m"
+    echo "  Start a development Docker container for interactive work."
+    echo "  This script will start a container with mounted code, workspace, and data directories."
     echo ""
     echo -e "\033[1mPositional arguments:\033[0m"
-    echo "  image_name                              Docker image name (if omitted, read from .env)"
+    echo "  image_name                       Docker image name (optional, will prompt if not provided or read from .env)"
     echo ""
     echo -e "\033[1mOptions:\033[0m"
-    echo "  -c, --container-name <name>             Container name (default: <image_name> with colons replaced by underscores)"
-    echo "  -w, --workspace <path>                  Absolute path to the workspace folder (will be cached)"
-    echo "  -d, --data-dir <path>                   Absolute path to the read-only data directory (will be cached)"
-    echo "  -g, --gpus <gpus>                       GPUs visible in container [all]"
-    echo "      --restart <Y|n>                     Restart container on reboot [Y]"
-    echo "      --docker-args <args>                Additional arguments to pass to docker run"
-    echo "  --non-interactive                       Run in non-interactive mode (use default values and do not prompt)"
-    echo "  -h, --help                              Show this help message"
+    echo "  -c, --container-name <name>      Container name (default: <image_name> with colons replaced by underscores)"
+    echo "  -w, --workspace <path>           Absolute path to the workspace folder (will be cached)"
+    echo "  -d, --data-dir <path>            Absolute path to the read-only data directory (will be cached)"
+    echo "  -g, --gpus <gpus>                GPUs visible in container [all]"
+    echo "      --restart <Y|n>              Restart container on reboot [Y]"
+    echo "      --docker-args <args>         Additional arguments to pass to docker run"
+    echo "      --non-interactive            Run without prompts (use provided values or defaults)"
+    echo "  -h, --help                       Show this help message"
     echo ""
     echo -e "\033[1mExamples:\033[0m"
-    echo "  $0 my-image:latest -c mycontainer -w /home/user/ws -d /home/user/data --gpus all --restart Y"
-    echo "  $0 my-image:latest --non-interactive"
-    echo "  $0 --help"
+    echo "  # Interactive mode (default, will prompt for image name if not in .env)"
+    echo "  $0"
+    echo ""
+    echo "  # With specific image"
+    echo "  $0 my-image:latest"
+    echo ""
+    echo "  # Non-interactive with specific options"
+    echo "  $0 my-image:latest -c mycontainer -w /home/user/ws -d /home/user/data --non-interactive"
+    echo ""
+    echo "  # Using all GPUs"
+    echo "  $0 my-image:latest --gpus 'all'"
+    echo ""
+    echo "  # Using only GPUs 0 and 1"
+    echo "  $0 my-image:latest --gpus '0,1'"
+    echo ""
+    echo "  # With additional Docker arguments"
+    echo "  $0 my-image:latest --docker-args '--privileged --network=host'"
+    echo ""
+    echo "  # Using defaults from .env"
+    echo "  $0 --non-interactive"
 }
 
 # Initialize variables
@@ -85,11 +113,21 @@ while [[ $# -gt 0 ]]; do
         show_help
         exit 0 ;;
     *)
-        echo "Unknown option: $1"
-        show_help
+        echo -e "${RED}Unknown option: $1${NC}"
+        echo "Use --help for usage information."
         exit 1 ;;
     esac
 done
+
+echo -e "${GREEN}========================================================================${NC}"
+echo -e "${GREEN}                 Development Container Setup Tool                      ${NC}"
+echo -e "${GREEN}========================================================================${NC}"
+echo ""
+
+if [[ "$non_interactive" == false ]]; then
+    echo -e "${BLUE}This script will help you start a development container.${NC}"
+    echo ""
+fi
 
 # Helper to read value from .env
 get_env_var() {
@@ -99,17 +137,17 @@ get_env_var() {
     fi
 }
 
-# ------------- Read default image name from .env or prompt user --------------
+# Get default image name from .env or prompt user
 if [ -z "$docker_image_name" ]; then
     docker_image_name=$(get_env_var docker_image_name)
     if [ -z "$docker_image_name" ]; then
         docker_image_name="DOCKER_IMAGE_NAME"
-        echo -e "\033[33mNo image name provided and .env not found. Using placeholder: $docker_image_name\033[0m"
+        echo -e "${YELLOW}No image name provided and .env not found. Using placeholder: $docker_image_name${NC}"
     else
-        echo -e "\033[33mNo image name provided, using image name from .env: $docker_image_name\033[0m"
+        echo -e "${BLUE}Using image name from .env: $docker_image_name${NC}"
     fi
     if [ "$non_interactive" = false ]; then
-        read -r -p "Image [$docker_image_name]: " docker_image_name_input
+        read -r -p "Docker image name [$docker_image_name]: " docker_image_name_input
         docker_image_name=${docker_image_name_input:-$docker_image_name}
     fi
 fi
@@ -117,15 +155,15 @@ fi
 # Check if the Docker image exists, prompt to retry if not
 while ! docker image inspect "$docker_image_name" >/dev/null 2>&1; do
     if [ "$non_interactive" = true ]; then
-        echo -e "\033[31mDocker image '$docker_image_name' does not exist.\033[0m"
+        echo -e "${RED}Docker image '$docker_image_name' does not exist.${NC}"
         exit 1
     fi
-    echo -e "\033[31mDocker image '$docker_image_name' does not exist.\033[0m"
-    read -r -p "Image [$docker_image_name]: " docker_image_name
+    echo -e "${RED}Docker image '$docker_image_name' does not exist.${NC}"
+    read -r -p "Docker image name [$docker_image_name]: " docker_image_name
 done
-echo -e "\033[36mUsing image name: $docker_image_name\033[0m"
+echo -e "${GREEN}✓ Using image: $docker_image_name${NC}"
 
-# -------------------------- Prompt for custom container name ---------------------------
+# Get container name
 if [ -z "$container_name" ]; then
     container_name=$(get_env_var container_name)
     if [ -z "$container_name" ]; then
@@ -140,76 +178,81 @@ fi
 # Check if the container with this name already exists, prompt to retry if it does
 while docker ps -a --format '{{.Names}}' | grep -wq "$container_name"; do
     if [ "$non_interactive" = true ]; then
-        echo -e "\033[31mA container with the name '$container_name' already exists.\033[0m"
+        echo -e "${RED}A container with the name '$container_name' already exists.${NC}"
         exit 1
     fi
-    echo -e "\033[31mA container with the name '$container_name' already exists.\033[0m"
+    echo -e "${RED}A container with the name '$container_name' already exists.${NC}"
     read -r -p "Enter a different container name: " container_name
 done
-echo -e "\033[36mUsing container name: $container_name\033[0m"
+echo -e "${GREEN}✓ Using container name: $container_name${NC}"
 
-# ----------------------------- Prompt for workspace folder -----------------------------
+# Get workspace folder
 if [ -z "$ws" ]; then
     ws=$(get_env_var workspace_dir)
     ws_default="${PWD}/ws"
     if [ "$non_interactive" = false ]; then
-        read -r -p "Absolute path to the project workspace folder with data and experiment artifacts [${ws:-$ws_default}]: " ws_input
+        read -r -p "Workspace folder path [${ws:-$ws_default}]: " ws_input
         ws=${ws_input:-${ws:-$ws_default}}
     else
         ws=${ws:-$ws_default}
     fi
 fi
 
-# Check if the provided ws path exists, prompt until it does
+# Check if the provided ws path exists, create if it doesn't
 while [ ! -d "$ws" ]; do
     if [ "$non_interactive" = true ]; then
-        echo -e "\033[31mWorkspace directory '$ws' does not exist.\033[0m"
-        exit 1
+        echo -e "${BLUE}Creating workspace directory: $ws${NC}"
+        mkdir -p "$ws"
+        break
     fi
-    echo -e "\033[31mWorkspace directory '$ws' does not exist. Attempting to create it...\033[0m"
+    echo -e "${YELLOW}Workspace directory '$ws' does not exist. Attempting to create it...${NC}"
     mkdir -p "$ws"
     if [ $? -ne 0 ]; then
-        echo -e "\033[31mFailed to create workspace directory '$ws'.\033[0m"
-        # Prompt for a valid workspace directory
+        echo -e "${RED}Failed to create workspace directory '$ws'.${NC}"
         read -r -p "Please provide an existing workspace directory: " ws
+    else
+        break
     fi
 done
 
-echo -e "\033[36mUsing workspace directory: $ws\033[0m"
+echo -e "${GREEN}✓ Using workspace directory: $ws${NC}"
 
-# ----------------------------- Prompt for data directory ------------------------------
+# Get data directory
 if [ -z "$data_dir" ]; then
     data_dir=$(get_env_var data_dir)
     data_dir_default="${PWD}/data"
     if [ "$non_interactive" = false ]; then
-        read -r -p "Absolute path to the read-only data directory [${data_dir:-$data_dir_default}]: " data_dir_input
+        read -r -p "Data directory path (read-only) [${data_dir:-$data_dir_default}]: " data_dir_input
         data_dir=${data_dir_input:-${data_dir:-$data_dir_default}}
     else
         data_dir=${data_dir:-$data_dir_default}
     fi
 fi
 
-# Check if the provided data_dir path exists, prompt until it does
+# Check if the provided data_dir path exists, create if it doesn't
 while [ ! -d "$data_dir" ]; do
     if [ "$non_interactive" = true ]; then
-        echo -e "\033[31mDirectory '$data_dir' does not exist.\033[0m"
-        exit 1
+        echo -e "${BLUE}Creating data directory: $data_dir${NC}"
+        mkdir -p "$data_dir"
+        break
     fi
-    echo -e "\033[31mDirectory '$data_dir' does not exist. Attempting to create it...\033[0m"
+    echo -e "${YELLOW}Data directory '$data_dir' does not exist. Attempting to create it...${NC}"
     mkdir -p "$data_dir"
     if [ $? -ne 0 ]; then
-        echo -e "\033[31mFailed to create directory '$data_dir'.\033[0m"
-        # Prompt for a valid data directory
+        echo -e "${RED}Failed to create data directory '$data_dir'.${NC}"
         read -r -p "Please provide an existing data directory: " data_dir
+    else
+        break
     fi
 done
 
-echo -e "\033[36mUsing data directory: $data_dir\033[0m"
+echo -e "${GREEN}✓ Using data directory: $data_dir${NC}"
 
-# ------------------------- Prompt for GPUs visible in container ------------------------
+# Get GPUs configuration
 if [ -z "$gpus_prompt" ]; then
-    gpus_prompt=$(get_env_var gpus)
-    gpus_prompt=${gpus_prompt#device=}
+    gpus_env=$(get_env_var gpus)
+    # Remove device= prefix if present in .env
+    gpus_prompt=${gpus_env#device=}
     if [ "$non_interactive" = false ]; then
         read -p "GPUs [${gpus_prompt:-all}]: " gpus_input
         gpus_prompt=${gpus_input:-${gpus_prompt:-all}}
@@ -217,17 +260,23 @@ if [ -z "$gpus_prompt" ]; then
         gpus_prompt=${gpus_prompt:-all}
     fi
 fi
-gpus="device=$gpus_prompt"
-echo -e "\033[36mUsing GPUs: $gpus_prompt\033[0m"
+
+# Construct the GPU argument for Docker
+if [[ "$gpus_prompt" == "all" ]]; then
+    gpus="all"
+else
+    gpus="device=$gpus_prompt"
+fi
+echo -e "${GREEN}✓ Using GPUs: $gpus_prompt${NC}"
 
 # Show GPU memory usage if nvidia-smi is available and GPUs are present
 if command -v nvidia-smi &>/dev/null; then
-    echo -e "\033[1;34mCurrent GPU memory usage:\033[0m"
+    echo -e "${BLUE}Current GPU memory usage:${NC}"
     nvidia-smi --query-gpu=index,name,memory.total,memory.used,memory.free --format=csv,noheader,nounits \
         | awk -F, '{printf "GPU %s (%s): Used %s MiB / %s MiB (Free: %s MiB)\n", $1, $2, $4, $3, $5}'
 fi
 
-# ----------------------- Prompt for restart policy (on reboot) -------------------------
+# Get restart policy
 if [ -z "$rc" ]; then
     rc=$(get_env_var restart_container)
     rc=${rc:-Y}
@@ -238,23 +287,25 @@ if [ -z "$rc" ]; then
             if [ "$rc" == "Y" ] || [ "$rc" == "n" ]; then
                 break
             else
-                echo "Provide Y or n"
+                echo -e "${RED}Please enter Y or n${NC}"
             fi
         done
     fi
 fi
 if [ "$rc" != "Y" ] && [ "$rc" != "n" ]; then
-    echo "Invalid value for --restart. Use 'Y' or 'n'."
+    echo -e "${RED}Invalid value for --restart. Use 'Y' or 'n'.${NC}"
     exit 1
 fi
-echo -e "\033[36mUsing restart policy: $rc\033[0m"
+echo -e "${GREEN}✓ Using restart policy: $rc${NC}"
 
 # Include any extra docker arguments
 if [ ! -z "$docker_extra_args" ]; then
-    echo -e "\033[36mUsing extra docker args: $docker_extra_args\033[0m"
+    echo -e "${BLUE}Using extra docker args: $docker_extra_args${NC}"
 fi
 
-# -------------------------- Save configuration to .env file ----------------------------
+# Save configuration to .env file
+echo ""
+echo -e "${BLUE}=== Saving Configuration ===${NC}"
 # Function to update or add a key-value pair in .env
 update_env_var() {
     local key="$1"
@@ -281,7 +332,9 @@ update_env_var "data_dir" "$data_dir"
 update_env_var "gpus" "$gpus"
 update_env_var "restart_container" "$rc"
 
-# -------------------------------- Start the container ----------------------------------
+# Start the container
+echo ""
+echo -e "${BLUE}=== Starting Development Container ===${NC}"
 docker_run_options=()
 
 if [ "$rc" == "Y" ]; then
@@ -290,7 +343,7 @@ elif [ "$rc" == "n" ]; then
     docker_run_options+=(--rm)
 fi
 
-docker_run_options+=(--gpus \"$gpus\")
+docker_run_options+=(--gpus "$gpus")
 docker_run_options+=(-d)
 docker_run_options+=(-v "$HOME/.ssh:/root/.ssh")
 if [ "$SSH_AUTH_SOCK" ]; then
@@ -315,38 +368,48 @@ fi
 
 # Validate required arguments early if running non-interactively
 if ! [ -t 0 ] && [ -z "$docker_image_name" ]; then
-    echo -e "\033[31mError: --image is required in non-interactive mode.\033[0m" >&2
+    echo -e "${RED}Error: Docker image name is required in non-interactive mode.${NC}" >&2
     exit 1
 fi
 
 # Run the Docker container
+echo -e "${BLUE}Starting container '$container_name' from image '$docker_image_name'...${NC}"
 docker run "${docker_run_options[@]}" "$docker_image_name"
 
-GREEN='\033[1;32m'
-NC='\033[0m'
-
-# Add color to success output
-success_msg="${GREEN}-------------------- CONTAINER HAS BEEN SUCCESSFULLY STARTED ---------------------${NC}
-\033[1mContainer name:\033[0m $container_name
-
-\033[1mAttach shell to the container:\033[0m docker exec -it $container_name bash
-\033[1mStop the container:\033[0m docker stop $container_name
-\033[1mDelete the container:\033[0m docker rm $container_name
-
-\033[1mUpdate the image:\033[0m docker commit CONTAINER_ID $docker_image_name
-\n"
-if [ "$ws" ]; then
-    success_msg+="Inside the container $ws will be available at /ws\n"
-fi
-if [ "$data_dir" ]; then
-    success_msg+="Inside the container $data_dir will be available at /data (read-only)\n"
-fi
-success_msg+="\n"
-success_msg+="This message is saved in the .hint file.\n"
-success_msg+="${GREEN}-----------------------------------------------------------------------------------${NC}"
-
-# Print to terminal
-echo -e "$success_msg"
+echo ""
+echo -e "${GREEN}========================================================================${NC}"
+echo -e "${GREEN}               Development Container Successfully Started!              ${NC}"
+echo -e "${GREEN}========================================================================${NC}"
+echo ""
+echo -e "${BLUE}Container Details:${NC}"
+echo -e "• ${YELLOW}Container name:${NC} $container_name"
+echo -e "• ${YELLOW}Image:${NC} $docker_image_name"
+echo -e "• ${YELLOW}Workspace:${NC} $ws → /ws"
+echo -e "• ${YELLOW}Data:${NC} $data_dir → /data (read-only)"
+echo -e "• ${YELLOW}Attached GPUs:${NC} $gpus"
+echo ""
+echo -e "${BLUE}Next steps:${NC}"
+echo -e "• ${YELLOW}Attach to container:${NC} docker exec -it $container_name bash"
+echo -e "• ${YELLOW}Stop container:${NC} docker stop $container_name"
+echo -e "• ${YELLOW}Remove container:${NC} docker rm $container_name"
+echo -e "• ${YELLOW}Update image:${NC} ./docker_update.sh"
+echo ""
+echo -e "${BLUE}This information is saved in the .hint file.${NC}"
 
 # Write plain version to .hint file (strip color codes)
-echo -e "$(echo "$success_msg" | sed 's/\\033\[[0-9;]*m//g')" > .hint
+hint_content="Development Container Successfully Started!
+
+Container Details:
+• Container name: $container_name
+• Image: $docker_image_name
+• Workspace: $ws → /ws
+• Data: $data_dir → /data (read-only)
+• Attached GPUs: $gpus
+
+Next steps:
+• Attach to container: docker exec -it $container_name bash
+• Stop container: docker stop $container_name
+• Remove container: docker rm $container_name
+• Update image: ./docker_update.sh"
+
+echo "$hint_content" > .hint

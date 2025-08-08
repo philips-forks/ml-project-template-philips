@@ -36,9 +36,9 @@ show_help() {
     echo ""
     echo "  # With commit message and author"
     echo "  $0 -c my_container -i my-image:v2.0 -m \"Updated dependencies\" --author \"John Doe <john@example.com>\""
-    echo ""
-    echo "  # With Dockerfile changes"
-    echo "  $0 -c my_container -i my-image:latest --change \"CMD /app/start.sh\" --change \"EXPOSE 8080\""
+    # echo ""
+    # echo "  # With Dockerfile changes"
+    # echo "  $0 -c my_container -i my-image:latest --change \"CMD /app/start.sh\" --change \"EXPOSE 8080\""
 }
 
 # Initialize variables

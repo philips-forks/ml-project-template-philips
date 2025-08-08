@@ -1,28 +1,53 @@
 #!/bin/bash
 set -e
 
+# Colors for output
+GREEN='\033[1;32m'
+BLUE='\033[1;34m'
+YELLOW='\033[1;33m'
+RED='\033[1;31m'
+NC='\033[0m' # No Color
+
 # Function to display help message
 show_help() {
-    echo -e "\033[1mUsage:\033[0m $0 <image_name> [OPTIONS]"
+    echo -e "\033[1mUsage:\033[0m $0 [image_name] [OPTIONS]"
+    echo ""
+    echo -e "\033[1mDescription:\033[0m"
+    echo "  Start a training Docker container to run ML model training."
+    echo "  This script will start a container and execute the training script."
     echo ""
     echo -e "\033[1mPositional arguments:\033[0m"
-    echo "  image_name                              Docker image name (if omitted, read from .env)"
+    echo "  image_name                       Docker image name (if omitted, read from .env)"
     echo ""
     echo -e "\033[1mOptions:\033[0m"
-    echo "  -c, --container-name <name>             Container name (default: <image_name>_train with colons replaced by underscores)"
-    echo "  -w, --workspace <path>                  Absolute path to the workspace folder (will be cached)"
-    echo "  -d, --data-dir <path>                   Absolute path to the read-only data directory (will be cached)"
-    echo "  -g, --gpus <gpus>                       GPUs visible in container [all]"
-    echo "      --restart <Y|n>                     Restart container on reboot [Y]"
-    echo "      --docker-args <args>                Additional arguments to pass to docker run"
-    echo "  --non-interactive                       Run in non-interactive mode (use default values and do not prompt)"
-    echo "  --detached                              Run training in detached mode (background)"
-    echo "  -h, --help                              Show this help message"
+    echo "  -c, --container-name <name>      Container name (default: <image_name>_train with colons replaced by underscores)"
+    echo "  -w, --workspace <path>           Absolute path to the workspace folder (will be cached)"
+    echo "  -d, --data-dir <path>            Absolute path to the read-only data directory (will be cached)"
+    echo "  -g, --gpus <gpus>                GPUs visible in container [all]"
+    echo "      --restart <Y|n>              Restart container on reboot [Y]"
+    echo "      --docker-args <args>         Additional arguments to pass to docker run"
+    echo "      --non-interactive            Run without prompts (use provided values or defaults)"
+    echo "      --detached                   Run training in detached mode (background)"
+    echo "  -h, --help                       Show this help message"
     echo ""
     echo -e "\033[1mExamples:\033[0m"
-    echo "  $0 my-image:latest -c mycontainer_train -w /home/user/ws -d /home/user/data --gpus all --restart Y"
-    echo "  $0 my-image:latest --non-interactive --detached"
-    echo "  $0 --help"
+echo "  # Interactive training (default, will prompt for image name if not in .env)"
+    echo "  $0"
+    echo ""
+    echo "  # Background training"
+    echo "  $0 my-image:latest --detached"
+    echo ""
+    echo "  # Using all GPUs"
+    echo "  $0 my-image:latest --gpus 'all'"
+    echo ""
+    echo "  # Using only GPUs 0 and 1"
+    echo "  $0 my-image:latest --gpus '0,1'"
+    echo ""
+    echo "  # With additional Docker arguments"
+    echo "  $0 my-image:latest --docker-args '--privileged --network=host'"
+    echo ""
+    echo "  # Non-interactive with specific options"
+    echo "  $0 my-image:latest -c mycontainer_train -w /home/user/ws --non-interactive --detached"
 }
 
 # Initialize variables
@@ -97,11 +122,21 @@ while [[ $# -gt 0 ]]; do
         show_help
         exit 0 ;;
     *)
-        echo "Unknown option: $1"
-        show_help
+        echo -e "${RED}Unknown option: $1${NC}"
+        echo "Use --help for usage information."
         exit 1 ;;
     esac
 done
+
+echo -e "${GREEN}========================================================================${NC}"
+echo -e "${GREEN}                    Training Container Setup Tool                      ${NC}"
+echo -e "${GREEN}========================================================================${NC}"
+echo ""
+
+if [[ "$non_interactive" == false ]]; then
+    echo -e "${BLUE}This script will help you start a training container.${NC}"
+    echo ""
+fi
 
 # Helper to read value from .env
 get_env_var() {
@@ -111,17 +146,17 @@ get_env_var() {
     fi
 }
 
-# ------------- Read default image name from .env or prompt user --------------
+# Get default image name from .env or prompt user
 if [ -z "$docker_image_name" ]; then
     docker_image_name=$(get_env_var docker_image_name)
     if [ -z "$docker_image_name" ]; then
         docker_image_name="DOCKER_IMAGE_NAME"
-        echo -e "\033[33mNo image name provided and .env not found. Using placeholder: $docker_image_name\033[0m"
+        echo -e "${YELLOW}No image name provided and .env not found. Using placeholder: $docker_image_name${NC}"
     else
-        echo -e "\033[33mNo image name provided, using image name from .env: $docker_image_name\033[0m"
+        echo -e "${BLUE}Using image name from .env: $docker_image_name${NC}"
     fi
     if [ "$non_interactive" = false ]; then
-        read -r -p "Image [$docker_image_name]: " docker_image_name_input
+        read -r -p "Docker image name [$docker_image_name]: " docker_image_name_input
         docker_image_name=${docker_image_name_input:-$docker_image_name}
     fi
 fi
@@ -129,15 +164,15 @@ fi
 # Check if the Docker image exists, prompt to retry if not
 while ! docker image inspect "$docker_image_name" >/dev/null 2>&1; do
     if [ "$non_interactive" = true ]; then
-        echo -e "\033[31mDocker image '$docker_image_name' does not exist.\033[0m"
+        echo -e "${RED}Docker image '$docker_image_name' does not exist.${NC}"
         exit 1
     fi
-    echo -e "\033[31mDocker image '$docker_image_name' does not exist.\033[0m"
-    read -r -p "Image [$docker_image_name]: " docker_image_name
+    echo -e "${RED}Docker image '$docker_image_name' does not exist.${NC}"
+    read -r -p "Docker image name [$docker_image_name]: " docker_image_name
 done
-echo -e "\033[36mUsing image name: $docker_image_name\033[0m"
+echo -e "${GREEN}✓ Using image: $docker_image_name${NC}"
 
-# -------------------------- Prompt for custom container name ---------------------------
+# Get container name
 if [ -z "$container_name" ]; then
     container_name=$(get_env_var container_name)
     if [ -z "$container_name" ]; then
@@ -154,80 +189,95 @@ fi
 # Check if a training container is already running
 existing_container=$(docker ps --filter "name=$container_name" --format "{{.Names}}" | head -1)
 if [ ! -z "$existing_container" ]; then
-    echo -e "\033[33mTraining container '$container_name' is already running.\033[0m"
+    echo -e "${YELLOW}Training container '$container_name' is already running.${NC}"
     if [ "$non_interactive" = false ]; then
         read -r -p "Stop and restart training? [Y/n]: " restart_input
         restart_input=${restart_input:-Y}
         if [ "$restart_input" = "Y" ]; then
-            echo -e "\033[36mStopping existing training container...\033[0m"
+            echo -e "${BLUE}Stopping existing training container...${NC}"
             docker stop "$container_name" >/dev/null 2>&1 || true
             docker rm "$container_name" >/dev/null 2>&1 || true
         else
-            echo -e "\033[36mExiting. Use 'docker logs -f $container_name' to monitor the running training.\033[0m"
+            echo -e "${BLUE}Exiting. Use 'docker logs -f $container_name' to monitor the running training.${NC}"
             exit 0
         fi
     else
-        echo -e "\033[31mTraining container is already running. Use --non-interactive with caution.\033[0m"
+        echo -e "${RED}Training container is already running. Use --non-interactive with caution.${NC}"
         exit 1
     fi
 fi
 
 # Remove any stopped container with the same name
 docker rm "$container_name" >/dev/null 2>&1 || true
-echo -e "\033[36mUsing container name: $container_name\033[0m"
+echo -e "${GREEN}✓ Using container name: $container_name${NC}"
 
-# ----------------------------- Prompt for workspace folder -----------------------------
+# Get workspace folder
 if [ -z "$ws" ]; then
     ws=$(get_env_var workspace_dir)
     ws_default="${PWD}/ws"
     if [ "$non_interactive" = false ]; then
-        read -r -p "Absolute path to the project workspace folder with data and experiment artifacts [${ws:-$ws_default}]: " ws_input
+        read -r -p "Workspace folder path [${ws:-$ws_default}]: " ws_input
         ws=${ws_input:-${ws:-$ws_default}}
     else
         ws=${ws:-$ws_default}
     fi
 fi
 
-# Check if the provided ws path exists, prompt until it does
+# Check if the provided ws path exists, create if it doesn't
 while [ ! -d "$ws" ]; do
     if [ "$non_interactive" = true ]; then
-        echo -e "\033[31mWorkspace directory '$ws' does not exist.\033[0m"
-        exit 1
+        echo -e "${BLUE}Creating workspace directory: $ws${NC}"
+        mkdir -p "$ws"
+        break
     fi
-    echo -e "\033[31mWorkspace directory '$ws' does not exist.\033[0m"
-    read -r -p "Please provide an existing workspace directory: " ws
+    echo -e "${YELLOW}Workspace directory '$ws' does not exist. Creating it...${NC}"
+    mkdir -p "$ws"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to create workspace directory '$ws'.${NC}"
+        read -r -p "Please provide an existing workspace directory: " ws
+    else
+        break
+    fi
 done
 
-echo -e "\033[36mUsing workspace directory: $ws\033[0m"
+echo -e "${GREEN}✓ Using workspace directory: $ws${NC}"
 
-# ----------------------------- Prompt for data directory ------------------------------
+# Get data directory
 if [ -z "$data_dir" ]; then
     data_dir=$(get_env_var data_dir)
     data_dir_default="${PWD}/data"
     if [ "$non_interactive" = false ]; then
-        read -r -p "Absolute path to the read-only data directory [${data_dir:-$data_dir_default}]: " data_dir_input
+        read -r -p "Data directory path (read-only) [${data_dir:-$data_dir_default}]: " data_dir_input
         data_dir=${data_dir_input:-${data_dir:-$data_dir_default}}
     else
         data_dir=${data_dir:-$data_dir_default}
     fi
 fi
 
-# Check if the provided data_dir path exists, prompt until it does
+# Check if the provided data_dir path exists, create if it doesn't
 while [ ! -d "$data_dir" ]; do
     if [ "$non_interactive" = true ]; then
-        echo -e "\033[31mDirectory '$data_dir' does not exist.\033[0m"
-        exit 1
+        echo -e "${BLUE}Creating data directory: $data_dir${NC}"
+        mkdir -p "$data_dir"
+        break
     fi
-    echo -e "\033[31mDirectory '$data_dir' does not exist.\033[0m"
-    read -r -p "Please provide an existing data directory: " data_dir
+    echo -e "${YELLOW}Data directory '$data_dir' does not exist. Creating it...${NC}"
+    mkdir -p "$data_dir"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to create data directory '$data_dir'.${NC}"
+        read -r -p "Please provide an existing data directory: " data_dir
+    else
+        break
+    fi
 done
 
-echo -e "\033[36mUsing data directory: $data_dir\033[0m"
+echo -e "${GREEN}✓ Using data directory: $data_dir${NC}"
 
-# ------------------------- Prompt for GPUs visible in container ------------------------
+# Get GPUs configuration
 if [ -z "$gpus_prompt" ]; then
-    gpus_prompt=$(get_env_var gpus)
-    gpus_prompt=${gpus_prompt#device=}
+    gpus_env=$(get_env_var gpus)
+    # Remove device= prefix if present in .env
+    gpus_prompt=${gpus_env#device=}
     if [ "$non_interactive" = false ]; then
         read -p "GPUs [${gpus_prompt:-all}]: " gpus_input
         gpus_prompt=${gpus_input:-${gpus_prompt:-all}}
@@ -235,12 +285,18 @@ if [ -z "$gpus_prompt" ]; then
         gpus_prompt=${gpus_prompt:-all}
     fi
 fi
-gpus="device=$gpus_prompt"
-echo -e "\033[36mUsing GPUs: $gpus_prompt\033[0m"
+
+# Construct the GPU argument for Docker
+if [[ "$gpus_prompt" == "all" ]]; then
+    gpus="all"
+else
+    gpus="device=$gpus_prompt"
+fi
+echo -e "${GREEN}✓ Using GPUs: $gpus_prompt${NC}"
 
 # Show GPU memory usage if nvidia-smi is available and GPUs are present
 if command -v nvidia-smi &>/dev/null; then
-    echo -e "\033[1;34mCurrent GPU memory usage:\033[0m"
+    echo -e "${BLUE}Current GPU memory usage:${NC}"
     nvidia-smi --query-gpu=index,name,memory.total,memory.used,memory.free --format=csv,noheader,nounits \
         | awk -F, '{printf "GPU %s (%s): Used %s MiB / %s MiB (Free: %s MiB)\n", $1, $2, $4, $3, $5}'
 fi
@@ -269,10 +325,12 @@ fi
 
 # Include any extra docker arguments
 if [ ! -z "$docker_extra_args" ]; then
-    echo -e "\033[36mUsing extra docker args: $docker_extra_args\033[0m"
+    echo -e "${BLUE}Using extra docker args: $docker_extra_args${NC}"
 fi
 
-# -------------------------------- Start the training container ----------------------------------
+# Start the training container
+echo ""
+echo -e "${BLUE}=== Starting Training Container ===${NC}"
 docker_run_options=()
 
 # if [ "$rc" == "Y" ]; then
@@ -281,15 +339,15 @@ docker_run_options=()
 #     docker_run_options+=(--rm)
 # fi
 
-docker_run_options+=(--gpus \"$gpus\")
+docker_run_options+=(--gpus "$gpus")
 
 # Set run mode (detached or interactive)
 if [ "$detached_mode" = true ]; then
     docker_run_options+=(-d)
-    echo -e "\033[36mRunning training in detached mode...\033[0m"
+    echo -e "${BLUE}Running training in detached mode...${NC}"
 else
     docker_run_options+=(-it)
-    echo -e "\033[36mRunning training in interactive mode...\033[0m"
+    echo -e "${BLUE}Running training in interactive mode...${NC}"
 fi
 
 docker_run_options+=(-v "$HOME/.ssh:/root/.ssh")
@@ -316,38 +374,58 @@ fi
 
 # Validate required arguments early if running non-interactively
 if ! [ -t 0 ] && [ -z "$docker_image_name" ]; then
-    echo -e "\033[31mError: --image is required in non-interactive mode.\033[0m" >&2
+    echo -e "${RED}Error: Docker image name is required in non-interactive mode.${NC}" >&2
     exit 1
 fi
 
 # Run the Docker container with the training command
-echo -e "\033[1;32m------------------------ Starting training container ------------------------\033[0m"
+echo -e "${BLUE}Starting training container '$container_name' from image '$docker_image_name'...${NC}"
 docker run "${docker_run_options[@]}" "$docker_image_name" python src/mlproject/main.py
 
-GREEN='\033[1;32m'
-NC='\033[0m'
-
 if [ "$detached_mode" = true ]; then
-    # Add color to success output for detached mode
-    success_msg="${GREEN}-------------------- TRAINING CONTAINER HAS BEEN SUCCESSFULLY STARTED ---------------------${NC}
-\033[1mContainer name:\033[0m $container_name
-\033[1mTraining command:\033[0m python src/mlproject/main.py
+    echo ""
+    echo -e "${GREEN}========================================================================${NC}"
+    echo -e "${GREEN}               Training Container Successfully Started!                 ${NC}"
+    echo -e "${GREEN}========================================================================${NC}"
+    echo ""
+    echo -e "${BLUE}Container Details:${NC}"
+    echo -e "• ${YELLOW}Container name:${NC} $container_name"
+    echo -e "• ${YELLOW}Image:${NC} $docker_image_name"
+    echo -e "• ${YELLOW}Training command:${NC} python src/mlproject/main.py"
+    echo -e "• ${YELLOW}Workspace:${NC} $ws → /ws"
+    echo -e "• ${YELLOW}Data:${NC} $data_dir → /data (read-only)"
+    echo -e "• ${YELLOW}Attached GPUs:${NC} $gpus"
+    echo ""
+    echo -e "${BLUE}Next steps:${NC}"
+    echo -e "• ${YELLOW}Monitor training logs:${NC} docker logs -f $container_name"
+    echo -e "• ${YELLOW}Attach to container:${NC} docker exec -it $container_name bash"
+    echo -e "• ${YELLOW}Stop training:${NC} docker stop $container_name"
+    echo -e "• ${YELLOW}Remove container:${NC} docker rm $container_name"
+    echo ""
+    echo -e "${BLUE}Training artifacts will be saved to: ${GREEN}$ws${NC}"
+    echo -e "${BLUE}This information is saved in the .train_hint file.${NC}"
 
-\033[1mMonitor training logs:\033[0m docker logs -f $container_name
-\033[1mAttach shell to the container:\033[0m docker exec -it $container_name bash
-\033[1mStop the training:\033[0m docker stop $container_name
-\033[1mDelete the container:\033[0m docker rm $container_name
+    # Write plain version to .train_hint file
+    hint_content="Training Container Successfully Started!
 
-\033[1mTraining artifacts will be saved to:\033[0m $ws
-\033[1mData is mounted from:\033[0m $data_dir (read-only)
+Container Details:
+• Container name: $container_name
+• Image: $docker_image_name
+• Training command: python src/mlproject/main.py
+• Workspace: $ws → /ws
+• Data: $data_dir → /data (read-only)
+• Attached GPUs: $gpus
 
-${GREEN}-----------------------------------------------------------------------------------${NC}"
+Next steps:
+• Monitor training logs: docker logs -f $container_name
+• Attach to container: docker exec -it $container_name bash
+• Stop training: docker stop $container_name
+• Remove container: docker rm $container_name
 
-    # Print to terminal
-    echo -e "$success_msg"
+Training artifacts will be saved to: $ws"
 
-    # Write plain version to .hint file (strip color codes)
-    echo -e "$(echo "$success_msg" | sed 's/\\033\[[0-9;]*m//g')" > .train_hint
+    echo "$hint_content" > .train_hint
 else
-    echo -e "${GREEN}Training completed. Check the workspace directory ($ws) for training artifacts.${NC}"
+    echo ""
+    echo -e "${GREEN}Training completed. Check the workspace directory (${GREEN}$ws${NC}) for training artifacts.${NC}"
 fi
