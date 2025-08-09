@@ -15,6 +15,7 @@ show_help() {
     echo -e "\033[1mDescription:\033[0m"
     echo "  Update a Docker image by committing changes from an existing running container."
     echo "  This script will commit the current state of a container to update the specified image."
+    echo -e "  ⚠️  \033[1mThis script should be run on the HOST SYSTEM, not inside a Docker container.\033[0m"
     echo ""
     echo -e "\033[1mOptions:\033[0m"
     echo "  -c, --container <name|id>        Container name or ID to commit from"
@@ -41,6 +42,31 @@ show_help() {
     # echo "  $0 -c my_container -i my-image:latest --change \"CMD /app/start.sh\" --change \"EXPOSE 8080\""
 }
 
+# Safety check - ensure script is run only on host system (outside Docker containers)
+check_host_environment() {
+    echo -e "\033[1;33m⚠️  IMPORTANT: This script should ONLY be run on the HOST SYSTEM! ⚠️\033[0m"
+    echo -e "\033[1;33m   Running this script inside a Docker container will not work properly.\033[0m"
+    echo ""
+    
+    # Check if we're likely in a container
+    if [ -f /.dockerenv ] || grep -q 'docker\|lxc' /proc/1/cgroup 2>/dev/null; then
+        echo -e "${RED}✗ Docker container environment detected.${NC}"
+        echo -e "${RED}   You appear to be running this script inside a Docker container.${NC}"
+        echo ""
+        echo -e "${BLUE}To use this script:${NC}"
+        echo -e "${BLUE}1. Exit the Docker container${NC}"
+        echo -e "${BLUE}2. Run this script from your host terminal${NC}"
+        echo -e "${BLUE}3. The script will commit changes from your running container to update the image${NC}"
+        echo ""
+        echo -e "${RED}Aborting. This script must be run from the host system.${NC}"
+        exit 1
+    else
+        echo -e "${GREEN}✓ Host system environment detected.${NC}"
+    fi
+    
+    echo ""
+}
+
 # Initialize variables
 container_name=""
 docker_image_name=""
@@ -56,44 +82,44 @@ while [[ $# -gt 0 ]]; do
         -c|--container)
             container_name="$2"
             shift 2
-            ;;
+        ;;
         -i|--image)
             docker_image_name="$2"
             shift 2
-            ;;
+        ;;
         -m|--message)
             commit_message="$2"
             shift 2
-            ;;
+        ;;
         --author)
             commit_author="$2"
             shift 2
-            ;;
+        ;;
         --change)
             dockerfile_changes+=("$2")
             shift 2
-            ;;
+        ;;
         --pause)
             pause_container=true
             shift
-            ;;
+        ;;
         --no-pause)
             pause_container=false
             shift
-            ;;
+        ;;
         --non-interactive)
             non_interactive=true
             shift
-            ;;
+        ;;
         -h|--help)
             show_help
             exit 0
-            ;;
+        ;;
         *)
             echo -e "${RED}Unknown option: $1${NC}"
             echo "Use --help for usage information."
             exit 1
-            ;;
+        ;;
     esac
 done
 
@@ -101,6 +127,9 @@ echo -e "${GREEN}===============================================================
 echo -e "${GREEN}                    Docker Image Update Tool                           ${NC}"
 echo -e "${GREEN}========================================================================${NC}"
 echo ""
+
+# Check that we're running on host system, not inside a container
+check_host_environment
 
 # Helper function to read value from .env
 get_env_var() {
