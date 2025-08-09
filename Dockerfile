@@ -16,7 +16,9 @@ RUN echo "#!/bin/sh" > ~/start.sh \
     && chmod +x ~/start.sh
 
 # ------------------------------------ Miscellaneous ------------------------------------
-ENV TB_DIR=/ws/experiments
-WORKDIR /code
+# Suppress pip root warning permanently
+RUN pip config set global.root-user-action ignore
 
+# ------------------------------------ Entrypoint ---------------------------------------
+WORKDIR /code
 CMD ["sh", "-c", "~/start.sh"]
