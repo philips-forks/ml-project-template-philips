@@ -24,6 +24,7 @@ show_help() {
     echo "      --uninstall                  Uninstall packages instead of installing"
     echo "      --upgrade                    Upgrade packages to latest versions"
     echo "      --upgrade-all                Upgrade all packages"
+    echo "      --sync                       Synchronize installed packages with pyproject.toml"
     echo "      --no-deps                    Don't install package dependencies"
     echo "      --user                       Install to the Python user install directory"
     echo "      --force-reinstall            Reinstall all packages even if up-to-date"
@@ -51,6 +52,9 @@ show_help() {
     echo "  $0 --upgrade numpy"
     echo "  $0 --upgrade-all"
     echo ""
+    echo "  # Sync with pyproject.toml"
+    echo "  $0 --sync"
+    echo ""
     echo "  # Install without updating pyproject.toml"
     echo "  $0 --no-pyproject-update temporary-package"
 }
@@ -59,6 +63,7 @@ show_help() {
 UNINSTALL=false
 UPGRADE=false
 UPGRADE_ALL=false
+SYNC=false
 NO_DEPS=false
 USER_INSTALL=false
 FORCE_REINSTALL=false
@@ -80,6 +85,10 @@ while [[ $# -gt 0 ]]; do
         ;;
         --upgrade-all)
             UPGRADE_ALL=true
+            shift
+        ;;
+        --sync)
+            SYNC=true
             shift
         ;;
         --no-deps)
@@ -123,7 +132,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Validate arguments
-if [[ $UPGRADE_ALL == false && ${#PACKAGES[@]} -eq 0 ]]; then
+if [[ $SYNC == true && ${#PACKAGES[@]} -gt 0 ]]; then
+    echo -e "${RED}Error: --sync cannot be used with package arguments.${NC}"
+    echo "Use --help for usage information."
+    exit 1
+fi
+
+if [[ $UPGRADE_ALL == false && $SYNC == false && ${#PACKAGES[@]} -eq 0 ]]; then
     echo -e "${RED}Error: No packages specified.${NC}"
     echo "Use --help for usage information."
     exit 1
@@ -163,6 +178,19 @@ echo ""
 # Function to extract package name from package specification
 extract_package_name() {
     local spec="$1"
+    
+    # Handle git URLs (e.g., "tqdm @ git+https://github.com/tqdm/tqdm.git")
+    if [[ "$spec" == *" @ git+"* ]]; then
+        echo "$spec" | cut -d' ' -f1
+        return
+    fi
+    
+    # Handle other URL formats
+    if [[ "$spec" == *"@"* && "$spec" == *"://"* ]]; then
+        echo "$spec" | cut -d'@' -f1
+        return
+    fi
+    
     # Remove version constraints (==, >=, <=, >, <, !=, ~=)
     echo "$spec" | sed -E 's/[><=!~]=?.*$//' | sed 's/\[.*\]$//'
 }
@@ -171,6 +199,33 @@ extract_package_name() {
 get_installed_version() {
     local package="$1"
     pip show "$package" 2>/dev/null | grep "Version:" | cut -d' ' -f2
+}
+
+# Function to parse pyproject.toml dependencies
+get_pyproject_dependencies() {
+    if [[ ! -f "pyproject.toml" ]]; then
+        echo -e "${YELLOW}Warning: pyproject.toml not found in current directory${NC}"
+        return 1
+    fi
+    
+    # Extract dependencies from pyproject.toml, handling git URLs properly
+    sed -n '/^dependencies = \[/,/^]/p' pyproject.toml | \
+    grep -E '^\s*"' | \
+    sed 's/^\s*"//' | \
+    sed 's/",\?$//' | \
+    sed 's/"$//' | \
+    grep -v '^\s*#'  # Remove comment lines
+}
+
+# Function to get all installed packages
+get_installed_packages() {
+    pip list --format=freeze | cut -d'=' -f1
+}
+
+# Function to check if package is installed
+is_package_installed() {
+    local package="$1"
+    pip show "$package" &>/dev/null
 }
 
 # Function to add package to pyproject.toml dependencies
@@ -249,7 +304,79 @@ if [[ $DRY_RUN == true ]]; then
 fi
 
 # Handle different operations
-if [[ $UPGRADE_ALL == true ]]; then
+if [[ $SYNC == true ]]; then
+    echo -e "${BLUE}=== Synchronizing with pyproject.toml ===${NC}"
+    
+    if [[ ! -f "pyproject.toml" ]]; then
+        echo -e "${RED}Error: pyproject.toml not found in current directory${NC}"
+        exit 1
+    fi
+    
+    # Get dependencies from pyproject.toml
+    echo -e "${BLUE}Reading dependencies from pyproject.toml...${NC}"
+    mapfile -t dependencies < <(get_pyproject_dependencies)
+    
+    if [[ ${#dependencies[@]} -eq 0 ]]; then
+        echo -e "${YELLOW}No dependencies found in pyproject.toml${NC}"
+    else
+        echo -e "${BLUE}Found ${#dependencies[@]} dependencies in pyproject.toml${NC}"
+        
+        # Process each dependency
+        for dep in "${dependencies[@]}"; do
+            # Skip empty lines
+            if [[ -z "$dep" ]]; then
+                continue
+            fi
+            
+            package_name=$(extract_package_name "$dep")
+            echo ""
+            echo -e "${BLUE}Processing: $dep${NC}"
+            
+            # Check if package has version constraint
+            if [[ "$dep" == *"=="* || "$dep" == *">="* || "$dep" == *"<="* || "$dep" == *">"* || "$dep" == *"<"* || "$dep" == *"!="* || "$dep" == *"~="* ]]; then
+                # Package has version constraint - install/upgrade to specified version
+                echo -e "${BLUE}Installing/updating $package_name to match constraint: $dep${NC}"
+                if [[ $DRY_RUN == false ]]; then
+                    pip install "$dep"
+                else
+                    echo "Would run: pip install \"$dep\""
+                fi
+            else
+                # Package without version constraint
+                if is_package_installed "$package_name"; then
+                    # Package is installed - add version to pyproject.toml
+                    installed_version=$(get_installed_version "$package_name")
+                    if [[ -n "$installed_version" ]]; then
+                        echo -e "${BLUE}Package $package_name is installed (version: $installed_version)${NC}"
+                        if [[ $DRY_RUN == false ]]; then
+                            # Update pyproject.toml with pinned version
+                            sed -i "/\"$package_name\"/c\\    \"$package_name==$installed_version\"," pyproject.toml
+                            echo -e "${GREEN}✓ Updated pyproject.toml with $package_name==$installed_version${NC}"
+                        else
+                            echo "Would update pyproject.toml with $package_name==$installed_version"
+                        fi
+                    fi
+                else
+                    # Package not installed - install it
+                    echo -e "${BLUE}Installing $package_name...${NC}"
+                    if [[ $DRY_RUN == false ]]; then
+                        pip install "$package_name"
+                        # Update pyproject.toml with installed version
+                        installed_version=$(get_installed_version "$package_name")
+                        if [[ -n "$installed_version" ]]; then
+                            sed -i "/\"$package_name\"/c\\    \"$package_name==$installed_version\"," pyproject.toml
+                            echo -e "${GREEN}✓ Installed $package_name==$installed_version and updated pyproject.toml${NC}"
+                        fi
+                    else
+                        echo "Would run: pip install \"$package_name\""
+                        echo "Would update pyproject.toml with installed version"
+                    fi
+                fi
+            fi
+        done
+    fi
+    
+    elif [[ $UPGRADE_ALL == true ]]; then
     echo -e "${BLUE}=== Upgrading All Packages ===${NC}"
     if [[ $DRY_RUN == false ]]; then
         pip list --outdated --format=freeze | cut -d'=' -f1 | xargs -r pip install --upgrade
@@ -340,7 +467,9 @@ echo -e "${GREEN}===============================================================
 if [[ $DRY_RUN == false ]]; then
     echo ""
     echo -e "${BLUE}Summary of changes:${NC}"
-    if [[ $UNINSTALL == true ]]; then
+    if [[ $SYNC == true ]]; then
+        echo -e "• ${YELLOW}Synchronized packages with pyproject.toml${NC}"
+        elif [[ $UNINSTALL == true ]]; then
         echo -e "• ${YELLOW}Uninstalled packages:${NC} ${PACKAGES[*]}"
         elif [[ $UPGRADE_ALL == true ]]; then
         echo -e "• ${YELLOW}Upgraded all outdated packages${NC}"
@@ -348,7 +477,7 @@ if [[ $DRY_RUN == false ]]; then
         echo -e "• ${YELLOW}Installed packages:${NC} ${PACKAGES[*]}"
     fi
     
-    if [[ $NO_PYPROJECT_UPDATE == false ]]; then
+    if [[ $NO_PYPROJECT_UPDATE == false && $SYNC == false ]]; then
         echo -e "• ${YELLOW}Updated pyproject.toml dependencies${NC}"
     fi
     

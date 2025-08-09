@@ -135,6 +135,8 @@ $ ./docker_dev.sh my-project:v1.0 --non-interactive
 ```
 
 > **Connect VS Code** to the running development container ([instructions](./docs/VSCODE.md))
+>
+> **Manage Python packages** with automatic pyproject.toml sync using [`./pip_install.sh`](#-package-management-with-pip_installsh)
 
 8. **Or start training directly:**
 
@@ -195,6 +197,8 @@ $ diff ./ws/experiments/exp1/config.json ./ws/experiments/exp2/config.json
 11. **Update the image**
 
 After making changes to your development container (installing pip packages, etc.), you can update your Docker image to preserve those changes:
+
+> **Tip**: Use [`./pip_install.sh`](#package-management-with-pip_installsh) for enhanced package management with automatic pyproject.toml synchronization before updating your image.
 
 **Using the update script (recommended):**
 
@@ -401,3 +405,59 @@ docker run -it <base_image>:exp-250808_1430-baseline_model python src/your_proje
 tail -f ./ws/experiments/<experiment_name>/training.log
 ls ./ws/experiments/<experiment_name>/checkpoints/
 ```
+
+### Package Management with `pip_install.sh`
+
+The `pip_install.sh` script provides enhanced Python package management that automatically keeps your `pyproject.toml` file synchronized with installed packages. This ensures your project dependencies are always properly documented and version-pinned.
+
+#### Key Features
+
+-   **Automatic pyproject.toml updates**: Installed packages are automatically added to dependencies with exact versions
+-   **Sync functionality**: Synchronize your environment with pyproject.toml specifications
+-   **Smart dependency handling**: Supports complex package specifications including git URLs
+-   **Comprehensive options**: Install, uninstall, upgrade with various pip options
+
+#### Usage Examples
+
+```bash
+# Install packages and update pyproject.toml
+./pip_install.sh numpy pandas matplotlib
+
+# Install with version constraints
+./pip_install.sh "numpy>=1.20,<2.0" "pandas==2.0.0"
+
+# Synchronize environment with pyproject.toml
+./pip_install.sh --sync
+
+# Dry run to see what would be installed
+./pip_install.sh --dry-run --sync
+
+# Upgrade packages and update pyproject.toml
+./pip_install.sh --upgrade numpy pandas
+
+# Install without updating pyproject.toml (for temporary packages)
+./pip_install.sh --no-pyproject-update debug-package
+
+# Uninstall packages and remove from pyproject.toml
+./pip_install.sh --uninstall old-package
+
+# Get help with all available options
+./pip_install.sh --help
+```
+
+#### Sync Functionality
+
+The `--sync` option is particularly useful for environment management:
+
+-   **Installs missing packages** specified in pyproject.toml
+-   **Pins versions** for packages without version constraints
+-   **Updates packages** to match pyproject.toml version requirements
+-   **Handles git URLs** and complex package specifications
+
+<!-- This ensures your development environment exactly matches your project specifications, making it ideal for:
+
+-   Setting up new development environments
+-   Ensuring consistency across team members
+-   Preparing for deployment
+
+> **Tip**: Use `./pip_install.sh --sync` after pulling changes to ensure your environment matches the updated dependencies. -->
