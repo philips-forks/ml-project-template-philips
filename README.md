@@ -199,7 +199,7 @@ $ diff ./ws/experiments/exp1/config.json ./ws/experiments/exp2/config.json
 
 After making changes to your development container (installing pip packages, etc.), you can update your Docker image to preserve those changes:
 
-> **Tip**: Use [`./pip_install.sh`](#package-management-with-pip_installsh) for enhanced package management with automatic pyproject.toml synchronization before updating your image.
+> **Tip**: Use [`./pip_install.sh`](#6-package-management-with-pip_installsh) for enhanced package management with automatic pyproject.toml synchronization before updating your image.
 
 **Using the update script (recommended):**
 
@@ -407,7 +407,7 @@ tail -f ./ws/experiments/<experiment_name>/training.log
 ls ./ws/experiments/<experiment_name>/checkpoints/
 ```
 
-### Package Management with `pip_install.sh`
+### 6. Package Management with `pip_install.sh`
 
 The `pip_install.sh` script provides enhanced Python package management that automatically keeps your `pyproject.toml` file synchronized with installed packages. This ensures your project dependencies are always properly documented and version-pinned.
 
