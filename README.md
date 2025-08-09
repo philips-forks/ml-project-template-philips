@@ -51,11 +51,12 @@ Skip to [Complete Workflow](#complete-workflow) after initialization.
 All scripts support detailed help information:
 
 ```bash
-./init.sh --help           # Setup and initialization options
-./docker_build.sh --help   # Build configuration options
-./docker_dev.sh --help     # Development container options
-./docker_train.sh --help   # Training and experiment options
-./docker_update.sh --help  # Image update options
+./init.sh --help            # Setup and initialization options
+./docker_build.sh --help    # Build configuration options
+./docker_dev.sh --help      # Development container options
+./docker_train.sh --help    # Training and experiment options
+./docker_update.sh --help   # Image update options
+./pip_install.sh --help     # Package management helper
 ```
 
 Each script supports both **interactive** and **non-interactive** modes, with the latter using command-line arguments or defaults from the `.env` file.
