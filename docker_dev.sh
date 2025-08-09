@@ -386,7 +386,8 @@ echo -e "• ${YELLOW}Data:${NC} $data_dir → /data (read-only)"
 echo -e "• ${YELLOW}Attached GPUs:${NC} $gpus"
 echo ""
 echo -e "${BLUE}Next steps:${NC}"
-echo -e "• ${YELLOW}Attach to container:${NC} docker exec -it $container_name bash"
+echo -e "• ${YELLOW}Attach VSCode to container:${NC} ./docs/VSCODE.md"
+echo -e "• ${YELLOW}Attach shell to container:${NC} docker exec -it $container_name bash"
 echo -e "• ${YELLOW}Stop container:${NC} docker stop $container_name"
 echo -e "• ${YELLOW}Remove container:${NC} docker rm $container_name"
 echo -e "• ${YELLOW}Update image:${NC} ./docker_update.sh"
@@ -405,7 +406,8 @@ Container Details:
 • Attached GPUs: $gpus
 
 Next steps:
-• Attach to container: docker exec -it $container_name bash
+• Attach VSCode to container: ./docs/VSCODE.md
+• Attach shell to container: docker exec -it $container_name bash
 • Stop container: docker stop $container_name
 • Remove container: docker rm $container_name
 • Update image: ./docker_update.sh"

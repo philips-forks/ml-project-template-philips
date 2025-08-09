@@ -10,19 +10,16 @@ authors = [{ name = "Your Name", email = "your.name@example.com" }]
 license = { file = "LICENSE" }
 readme = "README.md"
 dependencies = [
-    # "albumentations",
     "matplotlib",
-    "numpy",
+    "numpy<2",
     "pandas",
-    # "opencv-python-headless",
-    "pillow",
+    "opencv-python-headless",
+    "Pillow",
     "pydicom",
     "scipy",
     "seaborn",
     "scikit-image",
-    "scikit-learn",
     "statsmodels",
-    "tqdm @ git+https://github.com/tqdm/tqdm.git",
 ]
 
 [project.scripts]
