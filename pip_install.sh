@@ -16,7 +16,7 @@ show_help() {
     echo ""
     
     # Show current environment info
-    echo -e "\033[1;34mCurrent Environment Info:\033[0m"
+    echo -e "\033[1mCurrent Environment Info:\033[0m"
     # Check for virtual environment
     if [ -n "$VIRTUAL_ENV" ]; then
         echo -e "  • Virtual Env: $(basename $VIRTUAL_ENV)"
