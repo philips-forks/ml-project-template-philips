@@ -341,7 +341,9 @@ fi
 
 docker_run_options+=(--gpus "$gpus")
 docker_run_options+=(-d)
-docker_run_options+=(-v "$HOME/.ssh:/root/.ssh")
+if [ "$HOME/.ssh" ]; then
+    docker_run_options+=(-v "$HOME/.ssh:/root/.ssh")
+fi
 if [ "$SSH_AUTH_SOCK" ]; then
     docker_run_options+=(-v "$SSH_AUTH_SOCK:/ssh-agent")
     docker_run_options+=(-e "SSH_AUTH_SOCK=/ssh-agent")

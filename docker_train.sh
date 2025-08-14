@@ -444,7 +444,9 @@ docker rm "$temp_container_name" >/dev/null 2>&1 || true
 echo -e "${GREEN}✓ Code frozen in image: $frozen_image_name${NC}"
 
 # Set up container mounts (no code mount since it's frozen in the image)
-docker_run_options+=(-v "$HOME/.ssh:/root/.ssh")
+if [ "$HOME/.ssh" ]; then
+    docker_run_options+=(-v "$HOME/.ssh:/root/.ssh")
+fi
 if [ "$SSH_AUTH_SOCK" ]; then
     docker_run_options+=(-v "$SSH_AUTH_SOCK:/ssh-agent")
     docker_run_options+=(-e "SSH_AUTH_SOCK=/ssh-agent")
