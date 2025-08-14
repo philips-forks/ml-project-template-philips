@@ -54,6 +54,7 @@ BASHRC="/root/.bashrc"
 CERT_PATH="/usr/local/share/ca-certificates/ciscoumbrella.crt"
 PEM_PATH="/etc/ssl/certs/ciscoumbrella.pem"
 CER_TMP="/ciscoumbrella.cer"
+PIP_INSTALL_SCRIPT="pip_install.sh"
 
 show_help() {
     echo -e "\033[1mUsage:\033[0m $0 [--set|--unset|--help]"
@@ -79,6 +80,16 @@ set_proxy() {
         echo "$PROXY_SETTINGS" >> "$BASHRC"
         echo -e "${BLUE}Proxy settings appended to $BASHRC.${NC}"
     fi
+    
+    # Update PIP_CMD in pip_install.sh
+    if [ -f "$PIP_INSTALL_SCRIPT" ]; then
+        echo -e "${BLUE}Updating PIP_CMD in $PIP_INSTALL_SCRIPT...${NC}"
+        sed -i 's/^PIP_CMD="pip"/PIP_CMD="env -u SSL_CERT_FILE -u REQUESTS_CA_BUNDLE pip"/' "$PIP_INSTALL_SCRIPT"
+        echo -e "${BLUE}PIP_CMD updated in $PIP_INSTALL_SCRIPT.${NC}"
+    else
+        echo -e "${YELLOW}Warning: $PIP_INSTALL_SCRIPT not found. Skipping PIP_CMD update.${NC}"
+    fi
+    
     if [ ! -f "$CERT_PATH" ]; then
         echo -e "${BLUE}Downloading and installing Cisco Umbrella certificate...${NC}"
         curl -fsSL -o "$CER_TMP" http://www.cisco.com/security/pki/certs/ciscoumbrellaroot.cer \
@@ -104,6 +115,16 @@ unset_proxy() {
     else
         echo -e "${YELLOW}No proxy settings found in $BASHRC.${NC}"
     fi
+    
+    # Restore original PIP_CMD in pip_install.sh
+    if [ -f "$PIP_INSTALL_SCRIPT" ]; then
+        echo -e "${BLUE}Restoring original PIP_CMD in $PIP_INSTALL_SCRIPT...${NC}"
+        sed -i 's/^PIP_CMD="env -u SSL_CERT_FILE -u REQUESTS_CA_BUNDLE pip"/PIP_CMD="pip"/' "$PIP_INSTALL_SCRIPT"
+        echo -e "${BLUE}PIP_CMD restored in $PIP_INSTALL_SCRIPT.${NC}"
+    else
+        echo -e "${YELLOW}Warning: $PIP_INSTALL_SCRIPT not found. Skipping PIP_CMD restore.${NC}"
+    fi
+    
     if [ -f "$CERT_PATH" ]; then
         rm -f "$CERT_PATH"
         update-ca-certificates --fresh
