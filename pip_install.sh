@@ -10,6 +10,58 @@ NC='\033[0m' # No Color
 
 # Function to display help message
 show_help() {
+    echo -e "\033[1m========================================================================\033[0m"
+    echo -e "\033[1m                    PIP CONTAINER/ENVIRONMENT PACKAGE HELPER             \033[0m"
+    echo -e "\033[1m========================================================================\033[0m"
+    echo ""
+    
+    # Show current environment info
+    echo -e "\033[1mCurrent Environment Info:\033[0m"
+    # Check for virtual environment
+    if [ -n "$VIRTUAL_ENV" ]; then
+        echo -e "  • Virtual Env: $(basename $VIRTUAL_ENV)"
+        elif [ -n "$CONDA_DEFAULT_ENV" ]; then
+        echo -e "  • Conda Env: $CONDA_DEFAULT_ENV"
+    else
+        echo -e "  • Virtual Env: None (using system Python)"
+    fi
+    
+    if command -v python3 &> /dev/null; then
+        python_path=$(python3 -c "import sys; print(sys.executable)" 2>/dev/null || echo "Unknown")
+        python_version=$(python3 --version 2>/dev/null || echo "Unknown")
+        echo -e "  • Python: $python_version"
+        echo -e "  • Location: $python_path"
+    else
+        echo -e "  • Python: Not found"
+    fi
+    
+    if command -v pip &> /dev/null; then
+        pip_version=$(pip --version 2>/dev/null | cut -d' ' -f2 || echo "Unknown")
+        echo -e "  • Pip: $pip_version"
+    else
+        echo -e "  • Pip: Not found"
+    fi
+    
+    # Check if we're in a container
+    if [ -f /.dockerenv ] || [ -n "${DOCKER_CONTAINER}" ]; then
+        echo -e "  • \033[1mRunning inside Docker container ✓\033[0m"
+    else
+        echo -e "  • \033[1mNot in Docker container (running on host)\033[0m"
+    fi
+    
+    echo ""
+    
+    # Show important warning only if NOT in container
+    if [ ! -f /.dockerenv ] && [ -z "${DOCKER_CONTAINER}" ]; then
+        echo -e "\033[1;31m⚠️  IMPORTANT:\033[0m This script is designed to run \033[1mwithin\033[0m the development"
+        echo -e "   container or active Python environment. It will modify packages in the"
+        echo -e "   current environment and update pyproject.toml accordingly."
+        echo ""
+    fi
+    
+    echo -e "\033[1m========================================================================\033[0m"
+    echo ""
+    
     echo -e "\033[1mUsage:\033[0m $0 [PACKAGE_NAMES] [OPTIONS]"
     echo ""
     echo -e "\033[1mDescription:\033[0m"
