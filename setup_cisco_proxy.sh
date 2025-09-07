@@ -48,7 +48,7 @@ export no_proxy=localhost,127.0.0.1,.philips.com
 export REQUESTS_CA_BUNDLE=/etc/ssl/certs/combined-certs.pem
 export SSL_CERT_FILE=/etc/ssl/certs/combined-certs.pem
 export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/combined-certs.pem
-alias pip='env -u SSL_CERT_FILE -u REQUESTS_CA_BUNDLE pip'
+# alias pip='env -u SSL_CERT_FILE -u REQUESTS_CA_BUNDLE pip'
 ${PROXY_SETTINGS_END}"
 BASHRC="/root/.bashrc"
 CERT_PATH="/usr/local/share/ca-certificates/ciscoumbrella.crt"
@@ -148,6 +148,45 @@ cleanup_certificates() {
     update-ca-certificates --fresh
 }
 
+# Function to update /etc/environment
+update_etc_environment() {
+    local env_file="/etc/environment"
+    
+    if grep -q "$PROXY_SETTINGS_START" "$env_file" 2>/dev/null; then
+        echo -e "${YELLOW}Proxy settings already present in $env_file. Skipping.${NC}"
+    else
+        echo -e "${BLUE}Adding proxy settings to $env_file...${NC}"
+        # Convert export statements to simple VAR=value format for /etc/environment
+        cat >> "$env_file" << EOF
+$PROXY_SETTINGS_START
+HTTP_PROXY=http://146.112.255.50:80
+HTTPS_PROXY=http://146.112.255.50:443
+NO_PROXY=localhost,127.0.0.1,.philips.com
+http_proxy=http://146.112.255.50:80
+https_proxy=http://146.112.255.50:443
+no_proxy=localhost,127.0.0.1,.philips.com
+REQUESTS_CA_BUNDLE=/etc/ssl/certs/combined-certs.pem
+SSL_CERT_FILE=/etc/ssl/certs/combined-certs.pem
+NODE_EXTRA_CA_CERTS=/etc/ssl/certs/combined-certs.pem
+$PROXY_SETTINGS_END
+EOF
+        echo -e "${BLUE}Proxy settings added to $env_file.${NC}"
+    fi
+}
+
+# Function to remove proxy settings from /etc/environment
+remove_from_etc_environment() {
+    local env_file="/etc/environment"
+    
+    if grep -q "$PROXY_SETTINGS_START" "$env_file" 2>/dev/null; then
+        echo -e "${BLUE}Removing proxy settings from $env_file...${NC}"
+        sed -i "/$PROXY_SETTINGS_START/,/$PROXY_SETTINGS_END/d" "$env_file"
+        echo -e "${BLUE}Proxy settings removed from $env_file.${NC}"
+    else
+        echo -e "${YELLOW}No proxy settings found in $env_file.${NC}"
+    fi
+}
+
 show_help() {
     echo -e "\033[1mUsage:\033[0m $0 [--set|--unset|--help]"
     echo ""
@@ -172,6 +211,9 @@ set_proxy() {
         echo "$PROXY_SETTINGS" >> "$BASHRC"
         echo -e "${BLUE}Proxy settings appended to $BASHRC.${NC}"
     fi
+    
+    # Update /etc/environment for system-wide proxy settings
+    update_etc_environment
     
     # # Update PIP_CMD in pip_install.sh
     # if [ -f "$PIP_INSTALL_SCRIPT" ]; then
@@ -203,6 +245,7 @@ set_proxy() {
     echo -e "${GREEN}Proxy setup completed successfully!${NC}"
     echo -e "${BLUE}Next step:${NC}"
     echo -e "• ${YELLOW}Run ${NC}\`source $BASHRC\`${YELLOW} or restart your shell to apply changes.${NC}"
+    echo -e "• ${YELLOW}Note: System-wide environment variables (from /etc/environment) will be available after container restart.${NC}"
 }
 
 unset_proxy() {
@@ -214,6 +257,9 @@ unset_proxy() {
     else
         echo -e "${YELLOW}No proxy settings found in $BASHRC.${NC}"
     fi
+    
+    # Remove proxy settings from /etc/environment
+    remove_from_etc_environment
     
     # # Restore original PIP_CMD in pip_install.sh
     # if [ -f "$PIP_INSTALL_SCRIPT" ]; then
@@ -230,6 +276,7 @@ unset_proxy() {
     echo -e "${GREEN}Proxy removal completed successfully!${NC}"
     echo -e "${BLUE}Next step:${NC}"
     echo -e "• ${YELLOW}Run ${NC}\`source $BASHRC\`${YELLOW} or restart your shell to apply changes.${NC}"
+    echo -e "• ${YELLOW}Note: System-wide environment variables will be fully removed after container restart.${NC}"
 }
 
 case "$1" in
