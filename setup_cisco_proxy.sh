@@ -41,13 +41,17 @@ PROXY_SETTINGS_END="# --- Cisco Proxy Settings END ---"
 PROXY_SETTINGS="${PROXY_SETTINGS_START}
 export HTTP_PROXY=http://146.112.255.50:80
 export HTTPS_PROXY=http://146.112.255.50:443
-export NO_PROXY=localhost,127.0.0.1,.philips.com
+export NO_PROXY=localhost,127.0.0.1,.philips.com,.github.com,github.com,api.github.com,*.github.com,*.githubusercontent.com
 export http_proxy=http://146.112.255.50:80
 export https_proxy=http://146.112.255.50:443
-export no_proxy=localhost,127.0.0.1,.philips.com
+export no_proxy=localhost,127.0.0.1,.philips.com,.github.com,github.com,api.github.com,*.github.com,*.githubusercontent.com
 export REQUESTS_CA_BUNDLE=/etc/ssl/certs/combined-certs.pem
 export SSL_CERT_FILE=/etc/ssl/certs/combined-certs.pem
 export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/combined-certs.pem
+# Node.js settings to fix VS Code Copilot connection hanging
+export NODE_OPTIONS=\"--max-http-header-size=32768\"
+# Disable problematic keep-alive behavior in corporate proxy environment
+export UV_THREADPOOL_SIZE=16
 # alias pip='env -u SSL_CERT_FILE -u REQUESTS_CA_BUNDLE pip'
 ${PROXY_SETTINGS_END}"
 BASHRC="/root/.bashrc"
@@ -161,13 +165,15 @@ update_etc_environment() {
 $PROXY_SETTINGS_START
 HTTP_PROXY=http://146.112.255.50:80
 HTTPS_PROXY=http://146.112.255.50:443
-NO_PROXY=localhost,127.0.0.1,.philips.com
+NO_PROXY=localhost,127.0.0.1,.philips.com,.github.com,github.com,api.github.com,*.github.com,*.githubusercontent.com
 http_proxy=http://146.112.255.50:80
 https_proxy=http://146.112.255.50:443
-no_proxy=localhost,127.0.0.1,.philips.com
+no_proxy=localhost,127.0.0.1,.philips.com,.github.com,github.com,api.github.com,*.github.com,*.githubusercontent.com
 REQUESTS_CA_BUNDLE=/etc/ssl/certs/combined-certs.pem
 SSL_CERT_FILE=/etc/ssl/certs/combined-certs.pem
 NODE_EXTRA_CA_CERTS=/etc/ssl/certs/combined-certs.pem
+NODE_OPTIONS=\"--max-http-header-size=32768\"
+UV_THREADPOOL_SIZE=16
 $PROXY_SETTINGS_END
 EOF
         echo -e "${BLUE}Proxy settings added to $env_file.${NC}"
@@ -188,7 +194,7 @@ remove_from_etc_environment() {
 }
 
 show_help() {
-    echo -e "\033[1mUsage:\033[0m $0 [--set|--unset|--help]"
+    echo -e "\033[1mUsage:\033[0m $0 [--set|--unset|--help] [--etc-env]"
     echo ""
     echo -e "\033[1;31m⚠️  WARNING: This script should ONLY be used within a Docker container! ⚠️\033[0m"
     echo -e "\033[1;31m   Do NOT run this script on your host system.\033[0m"
@@ -197,9 +203,15 @@ show_help() {
     echo "  Configure Cisco corporate proxy settings and certificate for the container."
     echo ""
     echo -e "\033[1mOptions:\033[0m"
-    echo "  --set     Set up Cisco proxy settings and install certificate (default if no arg)"
-    echo "  --unset   Remove Cisco proxy settings and uninstall certificate"
-    echo "  --help    Show this help message"
+    echo "  --set       Set up Cisco proxy settings and install certificate (default if no arg)"
+    echo "  --unset     Remove Cisco proxy settings and uninstall certificate"
+    echo "  --etc-env   Also update /etc/environment with proxy settings (optional)"
+    echo "  --help      Show this help message"
+    echo ""
+    echo -e "\033[1mExamples:\033[0m"
+    echo "  $0 --set                 # Set up proxy (bashrc only)"
+    echo "  $0 --set --etc-env       # Set up proxy (bashrc + /etc/environment)"
+    echo "  $0 --unset --etc-env     # Remove proxy (bashrc + /etc/environment)"
 }
 
 set_proxy() {
@@ -212,8 +224,10 @@ set_proxy() {
         echo -e "${BLUE}Proxy settings appended to $BASHRC.${NC}"
     fi
     
-    # Update /etc/environment for system-wide proxy settings
-    update_etc_environment
+    # Update /etc/environment for system-wide proxy settings (optional)
+    if [ "$UPDATE_ETC_ENV" = "true" ]; then
+        update_etc_environment
+    fi
     
     # # Update PIP_CMD in pip_install.sh
     # if [ -f "$PIP_INSTALL_SCRIPT" ]; then
@@ -245,7 +259,9 @@ set_proxy() {
     echo -e "${GREEN}Proxy setup completed successfully!${NC}"
     echo -e "${BLUE}Next step:${NC}"
     echo -e "• ${YELLOW}Run ${NC}\`source $BASHRC\`${YELLOW} or restart your shell to apply changes.${NC}"
-    echo -e "• ${YELLOW}Note: System-wide environment variables (from /etc/environment) will be available after container restart.${NC}"
+    if [ "$UPDATE_ETC_ENV" = "true" ]; then
+        echo -e "• ${YELLOW}Note: System-wide environment variables (from /etc/environment) will be available after container restart.${NC}"
+    fi
 }
 
 unset_proxy() {
@@ -258,8 +274,10 @@ unset_proxy() {
         echo -e "${YELLOW}No proxy settings found in $BASHRC.${NC}"
     fi
     
-    # Remove proxy settings from /etc/environment
-    remove_from_etc_environment
+    # Remove proxy settings from /etc/environment (optional)
+    if [ "$UPDATE_ETC_ENV" = "true" ]; then
+        remove_from_etc_environment
+    fi
     
     # # Restore original PIP_CMD in pip_install.sh
     # if [ -f "$PIP_INSTALL_SCRIPT" ]; then
@@ -276,26 +294,61 @@ unset_proxy() {
     echo -e "${GREEN}Proxy removal completed successfully!${NC}"
     echo -e "${BLUE}Next step:${NC}"
     echo -e "• ${YELLOW}Run ${NC}\`source $BASHRC\`${YELLOW} or restart your shell to apply changes.${NC}"
-    echo -e "• ${YELLOW}Note: System-wide environment variables will be fully removed after container restart.${NC}"
+    if [ "$UPDATE_ETC_ENV" = "true" ]; then
+        echo -e "• ${YELLOW}Note: System-wide environment variables will be fully removed after container restart.${NC}"
+    fi
 }
 
-case "$1" in
-    --set|"")
+# Parse command line arguments
+UPDATE_ETC_ENV="false"
+ACTION=""
+
+# Process all arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --set)
+            ACTION="set"
+            shift
+            ;;
+        --unset)
+            ACTION="unset"
+            shift
+            ;;
+        --etc-env)
+            UPDATE_ETC_ENV="true"
+            shift
+            ;;
+        --help|-h)
+            show_help
+            exit 0
+            ;;
+        "")
+            # Default action if no arguments
+            ACTION="set"
+            shift
+            ;;
+        *)
+            echo -e "${RED}Unknown argument: $1${NC}"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+# Set default action if none specified
+if [ -z "$ACTION" ]; then
+    ACTION="set"
+fi
+
+case "$ACTION" in
+    set)
         # Run safety check before proceeding
         check_docker_environment
         set_proxy
     ;;
-    --unset)
+    unset)
         # Run safety check before proceeding
         check_docker_environment
         unset_proxy
-    ;;
-    --help|-h)
-        show_help
-    ;;
-    *)
-        echo -e "${RED}Unknown argument: $1${NC}"
-        show_help
-        exit 1
     ;;
 esac
